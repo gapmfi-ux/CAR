@@ -6,7 +6,7 @@
 class CreditOfficerApp {
     constructor() {
         this.ui = new UI();
-        this.api = window.API; // Use the new API service
+        this.api = window.API;
         this.supervisor = window.supervisor;
         this.currentTab = 'officer';
         this.isLoading = false;
@@ -72,12 +72,10 @@ class CreditOfficerApp {
     }
 
     switchTab(tabId) {
-        // Update tab buttons
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.tab === tabId);
         });
         
-        // Update tab content
         document.querySelectorAll('.tab-content').forEach(content => {
             content.classList.toggle('active', content.id === tabId + 'View');
         });
@@ -147,9 +145,16 @@ class CreditOfficerApp {
                 sales: { action: '/sales/list', data: {} }
             });
             
-            const loans = results.loans?.data || [];
-            const recoveries = results.recoveries?.data || [];
-            const sales = results.sales?.data || [];
+            // Extract data from responses - handle both formats
+            const loans = this.extractData(results.loans);
+            const recoveries = this.extractData(results.recoveries);
+            const sales = this.extractData(results.sales);
+            
+            console.log('Loaded data:', { 
+                loansCount: loans.length, 
+                recoveriesCount: recoveries.length, 
+                salesCount: sales.length 
+            });
             
             // Officer view
             this.ui.renderLoanTable(loans);
@@ -176,6 +181,38 @@ class CreditOfficerApp {
         }
     }
 
+    /**
+     * Extract data from API response - handles multiple response formats
+     */
+    extractData(response) {
+        if (!response) return [];
+        
+        // If response has an error, return empty array
+        if (response.error) {
+            console.warn('API returned error:', response.error);
+            return [];
+        }
+        
+        // If response has a data property that is an array
+        if (response.data && Array.isArray(response.data)) {
+            return response.data;
+        }
+        
+        // If response itself is an array
+        if (Array.isArray(response)) {
+            return response;
+        }
+        
+        // If response has a data property that is an object with data property
+        if (response.data && response.data.data && Array.isArray(response.data.data)) {
+            return response.data.data;
+        }
+        
+        // Log unexpected format
+        console.warn('Unexpected response format:', response);
+        return [];
+    }
+
     // ===== LOAN SAVE =====
     async handleLoanSave() {
         if (this.isLoading) return;
@@ -192,7 +229,17 @@ class CreditOfficerApp {
             this.ui.showToast('⏳ Saving loan...', false, 0);
             
             const result = await this.api.createLoan(data);
-            this.ui.addOfficerLoanRow(result);
+            
+            // Extract the created loan from response
+            const newLoan = this.extractSingleRecord(result);
+            
+            if (newLoan) {
+                this.ui.addOfficerLoanRow(newLoan);
+            } else {
+                // If we can't extract, just refresh
+                await this.loadAllData();
+            }
+            
             this.ui.clearLoanForm();
             
             // Clear cache for loan list
@@ -228,9 +275,15 @@ class CreditOfficerApp {
             this.ui.showToast('⏳ Saving recovery...', false, 0);
             
             const result = await this.api.createRecovery(data);
-            this.ui.addOfficerRecoveryRow(result);
-            this.ui.clearRecoveryForm();
             
+            const newRecord = this.extractSingleRecord(result);
+            if (newRecord) {
+                this.ui.addOfficerRecoveryRow(newRecord);
+            } else {
+                await this.loadAllData();
+            }
+            
+            this.ui.clearRecoveryForm();
             this.api.clearCache('/recovery/list');
             
             if (this.supervisor) {
@@ -262,9 +315,15 @@ class CreditOfficerApp {
             this.ui.showToast('⏳ Saving sales...', false, 0);
             
             const result = await this.api.createSales(data);
-            this.ui.addOfficerSalesRow(result);
-            this.ui.clearSalesForm();
             
+            const newRecord = this.extractSingleRecord(result);
+            if (newRecord) {
+                this.ui.addOfficerSalesRow(newRecord);
+            } else {
+                await this.loadAllData();
+            }
+            
+            this.ui.clearSalesForm();
             this.api.clearCache('/sales/list');
             
             if (this.supervisor) {
@@ -278,6 +337,32 @@ class CreditOfficerApp {
         } finally {
             this.isLoading = false;
         }
+    }
+
+    /**
+     * Extract a single record from API response
+     */
+    extractSingleRecord(response) {
+        if (!response) return null;
+        
+        // If response has a data property
+        if (response.data) {
+            // If data is an array, return first item or null
+            if (Array.isArray(response.data)) {
+                return response.data[0] || null;
+            }
+            // If data is an object
+            if (typeof response.data === 'object') {
+                return response.data;
+            }
+        }
+        
+        // If response itself is the record
+        if (typeof response === 'object' && !response.error) {
+            return response;
+        }
+        
+        return null;
     }
 
     // ===== VALIDATION =====
