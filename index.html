@@ -13,13 +13,9 @@
 
         <!-- HEADER -->
         <div class="report-header">
-            <h1>
-                <i class="fas fa-user-tie" style="color:#1f5a8a;"></i>
-                Credit Officer Activity Report
-                <small>weekly</small>
-            </h1>
-            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-                <span class="week-badge"><i class="far fa-calendar-alt"></i> <span id="currentWeek">Aug 3 – 9, 2026</span></span>
+            <h1><i class="fas fa-user-tie"></i> Credit Officer Activity Report</h1>
+            <div class="user-info">
+                <span class="user-badge"><i class="fas fa-user-circle"></i> <span id="userName">Credit Officer</span></span>
             </div>
         </div>
 
@@ -34,7 +30,7 @@
         </div>
 
         <!-- ============================================================ -->
-        <!-- OFFICER VIEW-->
+        <!-- OFFICER VIEW -->
         <!-- ============================================================ -->
         <div class="tab-content active" id="officerView">
 
@@ -48,18 +44,17 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Product/Loan Type</th>
-                                <th>Customer Name</th>
-                                <th>Loan Amount</th>
-                                <th>Current Stage</th>
-                                <th>Remarks</th>
-                                <th>Supervisor Comments</th>
-                                <th style="text-align:center; min-width: 80px;">Action</th>
+                                <th style="width:14%;">Product</th>
+                                <th style="width:16%;">Customer</th>
+                                <th style="width:12%;">Amount</th>
+                                <th style="width:12%;">Stage</th>
+                                <th style="width:28%;">Remarks</th>
+                                <th style="width:10%; text-align:center;">Action</th>
                             </tr>
                         </thead>
                         <tbody id="loanTableBody">
                             <tr class="input-row" id="loanInputRow">
-                                <td><input type="text" id="loanType" placeholder="e.g. SME Loan" /></td>
+                                <td><input type="text" id="loanType" placeholder="SME Loan" /></td>
                                 <td><input type="text" id="loanCustomer" placeholder="Full name" /></td>
                                 <td><input type="number" id="loanAmount" placeholder="0" step="0.01" /></td>
                                 <td>
@@ -71,7 +66,6 @@
                                     </select>
                                 </td>
                                 <td><textarea id="loanRemarks" placeholder="Remarks&#10;Line 1&#10;Line 2" rows="2"></textarea></td>
-                                <td></td>
                                 <td style="text-align:center;">
                                     <button class="save-btn" id="saveLoanBtn"><i class="fas fa-check"></i> Save</button>
                                 </td>
@@ -91,23 +85,21 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Customer Name</th>
-                                <th>Outstanding Balance</th>
-                                <th>Loan Type</th>
-                                <th>Location</th>
-                                <th>Recovery Action Taken</th>
-                                <th>Supervisor Comments</th>
-                                <th style="text-align:center; min-width: 80px;">Action</th>
+                                <th style="width:16%;">Customer</th>
+                                <th style="width:12%;">Balance</th>
+                                <th style="width:14%;">Loan Type</th>
+                                <th style="width:12%;">Location</th>
+                                <th style="width:28%;">Action Taken</th>
+                                <th style="width:10%; text-align:center;">Action</th>
                             </tr>
                         </thead>
                         <tbody id="recoveryTableBody">
                             <tr class="input-row" id="recoveryInputRow">
-                                <td><input type="text" id="recCustomer" placeholder="Customer name" /></td>
+                                <td><input type="text" id="recCustomer" placeholder="Customer" /></td>
                                 <td><input type="number" id="recBalance" placeholder="0.00" step="0.01" /></td>
                                 <td><input type="text" id="recLoanType" placeholder="e.g. SME" /></td>
                                 <td><input type="text" id="recLocation" placeholder="City" /></td>
                                 <td><textarea id="recAction" placeholder="Action taken&#10;e.g. called, visited" rows="2"></textarea></td>
-                                <td></td>
                                 <td style="text-align:center;">
                                     <button class="save-btn" id="saveRecoveryBtn"><i class="fas fa-check"></i> Save</button>
                                 </td>
@@ -127,13 +119,12 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Location</th>
-                                <th>Date</th>
-                                <th>Purpose</th>
-                                <th>Status</th>
-                                <th>Remarks</th>
-                                <th>Supervisor Comments</th>
-                                <th style="text-align:center; min-width: 80px;">Action</th>
+                                <th style="width:14%;">Location</th>
+                                <th style="width:10%;">Date</th>
+                                <th style="width:18%;">Purpose</th>
+                                <th style="width:12%;">Status</th>
+                                <th style="width:28%;">Remarks</th>
+                                <th style="width:10%; text-align:center;">Action</th>
                             </tr>
                         </thead>
                         <tbody id="salesTableBody">
@@ -150,7 +141,6 @@
                                     </select>
                                 </td>
                                 <td><textarea id="salesRemarks" placeholder="Remarks&#10;Line 1&#10;Line 2" rows="2"></textarea></td>
-                                <td></td>
                                 <td style="text-align:center;">
                                     <button class="save-btn" id="saveSalesBtn"><i class="fas fa-check"></i> Save</button>
                                 </td>
@@ -176,22 +166,20 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Credit Officer</th>
-                                <th>Product/Loan Type</th>
-                                <th>Customer Name</th>
-                                <th>Loan Amount</th>
-                                <th>Current Stage</th>
-                                <th>Remarks</th>
-                                <th>Supervisor Comments</th>
-                                <th style="text-align:center; min-width: 80px;">Action</th>
+                                <th style="width:12%;">Officer</th>
+                                <th style="width:12%;">Product</th>
+                                <th style="width:14%;">Customer</th>
+                                <th style="width:10%;">Amount</th>
+                                <th style="width:10%;">Stage</th>
+                                <th style="width:20%;">Remarks</th>
+                                <th style="width:16%;">Supervisor Comments</th>
+                                <th style="width:8%; text-align:center;">Action</th>
                             </tr>
                         </thead>
                         <tbody id="supervisorLoanTableBody">
-                            <!-- Data loaded dynamically -->
                             <tr id="supervisorLoanEmpty">
-                                <td colspan="8" style="text-align:center; color:#8a9bb0; padding:2rem;">
-                                    <i class="fas fa-inbox" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i>
-                                    No loan records found
+                                <td colspan="8" class="empty-state">
+                                    <i class="fas fa-inbox"></i> No loan records found
                                 </td>
                             </tr>
                         </tbody>
@@ -209,21 +197,20 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Credit Officer</th>
-                                <th>Customer Name</th>
-                                <th>Outstanding Balance</th>
-                                <th>Loan Type</th>
-                                <th>Location</th>
-                                <th>Recovery Action Taken</th>
-                                <th>Supervisor Comments</th>
-                                <th style="text-align:center; min-width: 80px;">Action</th>
+                                <th style="width:12%;">Officer</th>
+                                <th style="width:14%;">Customer</th>
+                                <th style="width:10%;">Balance</th>
+                                <th style="width:12%;">Loan Type</th>
+                                <th style="width:10%;">Location</th>
+                                <th style="width:18%;">Action Taken</th>
+                                <th style="width:16%;">Supervisor Comments</th>
+                                <th style="width:8%; text-align:center;">Action</th>
                             </tr>
                         </thead>
                         <tbody id="supervisorRecoveryTableBody">
                             <tr id="supervisorRecoveryEmpty">
-                                <td colspan="8" style="text-align:center; color:#8a9bb0; padding:2rem;">
-                                    <i class="fas fa-inbox" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i>
-                                    No recovery records found
+                                <td colspan="8" class="empty-state">
+                                    <i class="fas fa-inbox"></i> No recovery records found
                                 </td>
                             </tr>
                         </tbody>
@@ -241,21 +228,20 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Credit Officer</th>
-                                <th>Location</th>
-                                <th>Date</th>
-                                <th>Purpose</th>
-                                <th>Status</th>
-                                <th>Remarks</th>
-                                <th>Supervisor Comments</th>
-                                <th style="text-align:center; min-width: 80px;">Action</th>
+                                <th style="width:12%;">Officer</th>
+                                <th style="width:12%;">Location</th>
+                                <th style="width:10%;">Date</th>
+                                <th style="width:16%;">Purpose</th>
+                                <th style="width:10%;">Status</th>
+                                <th style="width:18%;">Remarks</th>
+                                <th style="width:16%;">Supervisor Comments</th>
+                                <th style="width:8%; text-align:center;">Action</th>
                             </tr>
                         </thead>
                         <tbody id="supervisorSalesTableBody">
                             <tr id="supervisorSalesEmpty">
-                                <td colspan="8" style="text-align:center; color:#8a9bb0; padding:2rem;">
-                                    <i class="fas fa-inbox" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i>
-                                    No sales records found
+                                <td colspan="8" class="empty-state">
+                                    <i class="fas fa-inbox"></i> No sales records found
                                 </td>
                             </tr>
                         </tbody>
@@ -266,16 +252,16 @@
 
         <!-- TOAST -->
         <div class="flex-end mt-2">
-            <div id="statusMessage" class="toast" style="display: none; background: #1a4a6e;">
-                <i class="fas fa-check-circle" style="margin-right: 8px;"></i>
+            <div id="statusMessage" class="toast" style="display: none; background: #222;">
+                <i class="fas fa-check-circle" style="margin-right: 6px;"></i>
                 <span id="statusText">Record saved successfully</span>
             </div>
         </div>
 
         <!-- FOOTER -->
-        <div style="margin-top: 2rem; border-top: 1px dashed #cbdae8; padding-top: 1.2rem; display: flex; justify-content: space-between; flex-wrap: wrap; color: #3d5f7f; font-size:0.9rem;">
-            <span><i class="fas fa-google"></i> Auto-save to Google Sheet • validation enabled</span>
-            <span><i class="fas fa-sync-alt fa-fw"></i> Input row clears after save • remarks support paragraphing</span>
+        <div class="footer">
+            <span><i class="fas fa-google"></i> Auto-save • validation enabled</span>
+            <span><i class="fas fa-sync-alt"></i> Clear after save • paragraph support</span>
             <span><i class="fas fa-users"></i> <span id="viewModeLabel">Officer View</span></span>
         </div>
     </div>
