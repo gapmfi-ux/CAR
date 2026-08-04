@@ -5,62 +5,29 @@
 
 class UI {
     constructor() {
-        this.container = document.querySelector('.report-container');
         this.toastElement = document.getElementById('statusMessage');
         this.toastText = document.getElementById('statusText');
-        this.currentView = 'officer';
-    }
-
-    // ===== VIEW MANAGEMENT =====
-
-    /**
-     * Update the view based on role (Officer/Supervisor)
-     * @param {string} view - 'officer' or 'supervisor'
-     */
-    updateView(view) {
-        this.currentView = view;
-        
-        if (view === 'supervisor') {
-            this.container.classList.remove('officer-view');
-            this.container.classList.add('supervisor-view');
-            document.getElementById('roleIndicator').textContent = 'Supervisor';
-            document.getElementById('roleIndicator').style.background = '#1f5a8a';
-            document.getElementById('viewModeLabel').textContent = 'Supervisor view';
-        } else {
-            this.container.classList.remove('supervisor-view');
-            this.container.classList.add('officer-view');
-            document.getElementById('roleIndicator').textContent = 'Officer';
-            document.getElementById('roleIndicator').style.background = '#6b8ba4';
-            document.getElementById('viewModeLabel').textContent = 'Officer view';
-        }
+        this.toastTimeout = null;
     }
 
     // ===== TOAST NOTIFICATIONS =====
 
-    /**
-     * Show a toast notification
-     * @param {string} message - Message to display
-     * @param {boolean} isError - Whether this is an error message
-     * @param {number} duration - Display duration in ms
-     */
     showToast(message, isError = false, duration = 3000) {
         this.toastText.textContent = message;
         this.toastElement.style.display = 'block';
         this.toastElement.style.background = isError ? '#a13d3d' : '#1a4a6e';
         
-        // Clear any existing timeout
         if (this.toastTimeout) {
             clearTimeout(this.toastTimeout);
         }
         
-        this.toastTimeout = setTimeout(() => {
-            this.toastElement.style.display = 'none';
-        }, duration);
+        if (duration > 0) {
+            this.toastTimeout = setTimeout(() => {
+                this.toastElement.style.display = 'none';
+            }, duration);
+        }
     }
 
-    /**
-     * Hide the toast notification
-     */
     hideToast() {
         this.toastElement.style.display = 'none';
         if (this.toastTimeout) {
@@ -70,12 +37,6 @@ class UI {
 
     // ===== PARAGRAPH CELL RENDERER =====
 
-    /**
-     * Create a paragraph-formatted cell from text
-     * @param {string} text - Text content with line breaks
-     * @param {string} className - CSS class for the cell
-     * @returns {HTMLElement} - TD element with paragraph formatting
-     */
     createParagraphCell(text, className = 'remark-cell') {
         const td = document.createElement('td');
         td.className = className;
@@ -100,11 +61,6 @@ class UI {
         return td;
     }
 
-    /**
-     * Create a status badge cell
-     * @param {string} status - Status value
-     * @returns {HTMLElement} - TD element with status badge
-     */
     createStatusCell(status) {
         const td = document.createElement('td');
         const badge = document.createElement('span');
@@ -126,73 +82,47 @@ class UI {
         return td;
     }
 
-    // ===== LOAN TABLE RENDERER =====
+    // ===== OFFICER VIEW - LOAN TABLE =====
 
-    /**
-     * Render loan records to the table
-     * @param {Array} loans - Array of loan records
-     */
     renderLoanTable(loans) {
         const tbody = document.getElementById('loanTableBody');
         const inputRow = document.getElementById('loanInputRow');
         
-        // Clear existing rows (keep input row)
         while (tbody.firstChild) {
             tbody.removeChild(tbody.firstChild);
         }
-        
-        // Add input row first
         tbody.appendChild(inputRow);
         
-        // Add each loan record
         if (loans && loans.length > 0) {
             loans.forEach(loan => {
-                const row = this.createLoanRow(loan);
+                const row = this.createOfficerLoanRow(loan);
                 tbody.insertBefore(row, inputRow);
             });
         }
         
-        // Update count
         document.getElementById('loanCount').textContent = loans ? loans.length : 0;
     }
 
-    /**
-     * Create a loan row from record data
-     * @param {object} loan - Loan record
-     * @returns {HTMLElement} - TR element
-     */
-    createLoanRow(loan) {
+    createOfficerLoanRow(loan) {
         const tr = document.createElement('tr');
         
-        // Product
-        const productTd = document.createElement('td');
-        productTd.textContent = loan.product || loan.Product || '—';
-        tr.appendChild(productTd);
+        const fields = [
+            loan.product || loan.Product || '—',
+            loan.customer || loan.Customer || '—',
+            (typeof (loan.amount || loan.Amount || 0) === 'number') 
+                ? (loan.amount || loan.Amount || 0).toLocaleString() 
+                : (loan.amount || loan.Amount || '—')
+        ];
         
-        // Customer
-        const customerTd = document.createElement('td');
-        customerTd.textContent = loan.customer || loan.Customer || '—';
-        tr.appendChild(customerTd);
+        fields.forEach(val => {
+            const td = document.createElement('td');
+            td.textContent = val;
+            tr.appendChild(td);
+        });
         
-        // Amount
-        const amountTd = document.createElement('td');
-        const amount = loan.amount || loan.Amount || 0;
-        amountTd.textContent = typeof amount === 'number' ? amount.toLocaleString() : amount;
-        tr.appendChild(amountTd);
+        tr.appendChild(this.createStatusCell(loan.stage || loan.Stage || 'Review'));
+        tr.appendChild(this.createParagraphCell(loan.remarks || loan.Remarks || '', 'remark-cell'));
         
-        // Stage
-        const stage = loan.stage || loan.Stage || 'Review';
-        tr.appendChild(this.createStatusCell(stage));
-        
-        // Remarks
-        const remarks = loan.remarks || loan.Remarks || '';
-        tr.appendChild(this.createParagraphCell(remarks, 'remark-cell'));
-        
-        // Supervisor Comments (only visible in supervisor view)
-        const supervisor = loan.supervisor || loan.SupervisorComments || '';
-        tr.appendChild(this.createParagraphCell(supervisor, 'supervisor-cell supervisor-col'));
-        
-        // Action
         const actionTd = document.createElement('td');
         actionTd.style.textAlign = 'center';
         const editBtn = document.createElement('button');
@@ -200,8 +130,6 @@ class UI {
         editBtn.title = 'Edit';
         editBtn.innerHTML = '<i class="fas fa-edit"></i> ✏️ Edit';
         editBtn.addEventListener('click', () => {
-            // In a real app, this would open an edit modal
-            // For now, we'll show the data in an alert
             alert('✏️ Edit Loan Record:\n\n' + JSON.stringify(loan, null, 2));
         });
         actionTd.appendChild(editBtn);
@@ -210,54 +138,34 @@ class UI {
         return tr;
     }
 
-    /**
-     * Add a single loan row (for new records)
-     * @param {object} loan - New loan record
-     */
-    addLoanRow(loan) {
+    addOfficerLoanRow(loan) {
         const tbody = document.getElementById('loanTableBody');
         const inputRow = document.getElementById('loanInputRow');
-        const row = this.createLoanRow(loan);
+        const row = this.createOfficerLoanRow(loan);
         tbody.insertBefore(row, inputRow);
-        
-        // Update count
-        const count = tbody.querySelectorAll('tr:not(.input-row)').length;
-        document.getElementById('loanCount').textContent = count;
+        document.getElementById('loanCount').textContent = tbody.querySelectorAll('tr:not(.input-row)').length;
     }
 
-    /**
-     * Get loan form data from input fields
-     * @returns {object} - Loan data object
-     */
     getLoanFormData() {
         return {
             product: document.getElementById('loanType').value.trim(),
             customer: document.getElementById('loanCustomer').value.trim(),
             amount: parseFloat(document.getElementById('loanAmount').value) || 0,
             stage: document.getElementById('loanStage').value,
-            remarks: document.getElementById('loanRemarks').value,
-            supervisor: document.getElementById('loanSupervisor').value
+            remarks: document.getElementById('loanRemarks').value
         };
     }
 
-    /**
-     * Clear loan form fields
-     */
     clearLoanForm() {
         document.getElementById('loanType').value = '';
         document.getElementById('loanCustomer').value = '';
         document.getElementById('loanAmount').value = '';
         document.getElementById('loanStage').selectedIndex = 0;
         document.getElementById('loanRemarks').value = '';
-        document.getElementById('loanSupervisor').value = '';
     }
 
-    // ===== RECOVERY TABLE RENDERER =====
+    // ===== OFFICER VIEW - RECOVERY TABLE =====
 
-    /**
-     * Render recovery records to the table
-     * @param {Array} recoveries - Array of recovery records
-     */
     renderRecoveryTable(recoveries) {
         const tbody = document.getElementById('recoveryTableBody');
         const inputRow = document.getElementById('recoveryInputRow');
@@ -269,7 +177,7 @@ class UI {
         
         if (recoveries && recoveries.length > 0) {
             recoveries.forEach(recovery => {
-                const row = this.createRecoveryRow(recovery);
+                const row = this.createOfficerRecoveryRow(recovery);
                 tbody.insertBefore(row, inputRow);
             });
         }
@@ -277,44 +185,26 @@ class UI {
         document.getElementById('recoveryCount').textContent = recoveries ? recoveries.length : 0;
     }
 
-    /**
-     * Create a recovery row from record data
-     * @param {object} recovery - Recovery record
-     * @returns {HTMLElement} - TR element
-     */
-    createRecoveryRow(recovery) {
+    createOfficerRecoveryRow(recovery) {
         const tr = document.createElement('tr');
         
-        // Customer
-        const customerTd = document.createElement('td');
-        customerTd.textContent = recovery.customer || recovery.Customer || '—';
-        tr.appendChild(customerTd);
+        const fields = [
+            recovery.customer || recovery.Customer || '—',
+            (typeof (recovery.balance || recovery.Balance || 0) === 'number') 
+                ? (recovery.balance || recovery.Balance || 0).toLocaleString() 
+                : (recovery.balance || recovery.Balance || '—'),
+            recovery.loanType || recovery.LoanType || '—',
+            recovery.location || recovery.Location || '—'
+        ];
         
-        // Balance
-        const balanceTd = document.createElement('td');
-        const balance = recovery.balance || recovery.Balance || 0;
-        balanceTd.textContent = typeof balance === 'number' ? balance.toLocaleString() : balance;
-        tr.appendChild(balanceTd);
+        fields.forEach(val => {
+            const td = document.createElement('td');
+            td.textContent = val;
+            tr.appendChild(td);
+        });
         
-        // Loan Type
-        const loanTypeTd = document.createElement('td');
-        loanTypeTd.textContent = recovery.loanType || recovery.LoanType || '—';
-        tr.appendChild(loanTypeTd);
+        tr.appendChild(this.createParagraphCell(recovery.actionTaken || recovery.ActionTaken || '', 'remark-cell'));
         
-        // Location
-        const locationTd = document.createElement('td');
-        locationTd.textContent = recovery.location || recovery.Location || '—';
-        tr.appendChild(locationTd);
-        
-        // Action Taken
-        const action = recovery.actionTaken || recovery.ActionTaken || '';
-        tr.appendChild(this.createParagraphCell(action, 'remark-cell'));
-        
-        // Supervisor Comments
-        const supervisor = recovery.supervisor || recovery.SupervisorComments || '';
-        tr.appendChild(this.createParagraphCell(supervisor, 'supervisor-cell supervisor-col'));
-        
-        // Action
         const actionTd = document.createElement('td');
         actionTd.style.textAlign = 'center';
         const editBtn = document.createElement('button');
@@ -330,53 +220,34 @@ class UI {
         return tr;
     }
 
-    /**
-     * Add a single recovery row
-     * @param {object} recovery - New recovery record
-     */
-    addRecoveryRow(recovery) {
+    addOfficerRecoveryRow(recovery) {
         const tbody = document.getElementById('recoveryTableBody');
         const inputRow = document.getElementById('recoveryInputRow');
-        const row = this.createRecoveryRow(recovery);
+        const row = this.createOfficerRecoveryRow(recovery);
         tbody.insertBefore(row, inputRow);
-        
-        const count = tbody.querySelectorAll('tr:not(.input-row)').length;
-        document.getElementById('recoveryCount').textContent = count;
+        document.getElementById('recoveryCount').textContent = tbody.querySelectorAll('tr:not(.input-row)').length;
     }
 
-    /**
-     * Get recovery form data
-     * @returns {object} - Recovery data object
-     */
     getRecoveryFormData() {
         return {
             customer: document.getElementById('recCustomer').value.trim(),
             balance: parseFloat(document.getElementById('recBalance').value) || 0,
             loanType: document.getElementById('recLoanType').value.trim(),
             location: document.getElementById('recLocation').value.trim(),
-            actionTaken: document.getElementById('recAction').value,
-            supervisor: document.getElementById('recSupervisor').value
+            actionTaken: document.getElementById('recAction').value
         };
     }
 
-    /**
-     * Clear recovery form fields
-     */
     clearRecoveryForm() {
         document.getElementById('recCustomer').value = '';
         document.getElementById('recBalance').value = '';
         document.getElementById('recLoanType').value = '';
         document.getElementById('recLocation').value = '';
         document.getElementById('recAction').value = '';
-        document.getElementById('recSupervisor').value = '';
     }
 
-    // ===== SALES TABLE RENDERER =====
+    // ===== OFFICER VIEW - SALES TABLE =====
 
-    /**
-     * Render sales records to the table
-     * @param {Array} sales - Array of sales records
-     */
     renderSalesTable(sales) {
         const tbody = document.getElementById('salesTableBody');
         const inputRow = document.getElementById('salesInputRow');
@@ -388,7 +259,7 @@ class UI {
         
         if (sales && sales.length > 0) {
             sales.forEach(sale => {
-                const row = this.createSalesRow(sale);
+                const row = this.createOfficerSalesRow(sale);
                 tbody.insertBefore(row, inputRow);
             });
         }
@@ -396,42 +267,24 @@ class UI {
         document.getElementById('salesCount').textContent = sales ? sales.length : 0;
     }
 
-    /**
-     * Create a sales row from record data
-     * @param {object} sale - Sales record
-     * @returns {HTMLElement} - TR element
-     */
-    createSalesRow(sale) {
+    createOfficerSalesRow(sale) {
         const tr = document.createElement('tr');
         
-        // Location
-        const locationTd = document.createElement('td');
-        locationTd.textContent = sale.location || sale.Location || '—';
-        tr.appendChild(locationTd);
+        const fields = [
+            sale.location || sale.Location || '—',
+            sale.date || sale.Date || '—',
+            sale.purpose || sale.Purpose || '—'
+        ];
         
-        // Date
-        const dateTd = document.createElement('td');
-        dateTd.textContent = sale.date || sale.Date || '—';
-        tr.appendChild(dateTd);
+        fields.forEach(val => {
+            const td = document.createElement('td');
+            td.textContent = val;
+            tr.appendChild(td);
+        });
         
-        // Purpose
-        const purposeTd = document.createElement('td');
-        purposeTd.textContent = sale.purpose || sale.Purpose || '—';
-        tr.appendChild(purposeTd);
+        tr.appendChild(this.createStatusCell(sale.status || sale.Status || 'Open'));
+        tr.appendChild(this.createParagraphCell(sale.remarks || sale.Remarks || '', 'remark-cell'));
         
-        // Status
-        const status = sale.status || sale.Status || 'Open';
-        tr.appendChild(this.createStatusCell(status));
-        
-        // Remarks
-        const remarks = sale.remarks || sale.Remarks || '';
-        tr.appendChild(this.createParagraphCell(remarks, 'remark-cell'));
-        
-        // Supervisor Comments
-        const supervisor = sale.supervisor || sale.SupervisorComments || '';
-        tr.appendChild(this.createParagraphCell(supervisor, 'supervisor-cell supervisor-col'));
-        
-        // Action
         const actionTd = document.createElement('td');
         actionTd.style.textAlign = 'center';
         const editBtn = document.createElement('button');
@@ -447,53 +300,34 @@ class UI {
         return tr;
     }
 
-    /**
-     * Add a single sales row
-     * @param {object} sale - New sales record
-     */
-    addSalesRow(sale) {
+    addOfficerSalesRow(sale) {
         const tbody = document.getElementById('salesTableBody');
         const inputRow = document.getElementById('salesInputRow');
-        const row = this.createSalesRow(sale);
+        const row = this.createOfficerSalesRow(sale);
         tbody.insertBefore(row, inputRow);
-        
-        const count = tbody.querySelectorAll('tr:not(.input-row)').length;
-        document.getElementById('salesCount').textContent = count;
+        document.getElementById('salesCount').textContent = tbody.querySelectorAll('tr:not(.input-row)').length;
     }
 
-    /**
-     * Get sales form data
-     * @returns {object} - Sales data object
-     */
     getSalesFormData() {
         return {
             location: document.getElementById('salesLocation').value.trim(),
             date: document.getElementById('salesDate').value.trim() || this.getCurrentDate(),
             purpose: document.getElementById('salesPurpose').value.trim(),
             status: document.getElementById('salesStatus').value,
-            remarks: document.getElementById('salesRemarks').value,
-            supervisor: document.getElementById('salesSupervisor').value
+            remarks: document.getElementById('salesRemarks').value
         };
     }
 
-    /**
-     * Clear sales form fields
-     */
     clearSalesForm() {
         document.getElementById('salesLocation').value = '';
         document.getElementById('salesDate').value = '';
         document.getElementById('salesPurpose').value = '';
         document.getElementById('salesStatus').selectedIndex = 0;
         document.getElementById('salesRemarks').value = '';
-        document.getElementById('salesSupervisor').value = '';
     }
 
     // ===== HELPER FUNCTIONS =====
 
-    /**
-     * Get current date in DD-MMM format
-     * @returns {string} - Formatted date
-     */
     getCurrentDate() {
         const date = new Date();
         const day = String(date.getDate()).padStart(2, '0');
@@ -501,10 +335,6 @@ class UI {
         return `${day}-${months[date.getMonth()]}`;
     }
 
-    /**
-     * Get current week range
-     * @returns {string} - Week range string
-     */
     getCurrentWeek() {
         const now = new Date();
         const day = now.getDay();
@@ -520,13 +350,9 @@ class UI {
         return `${format(monday)} – ${format(sunday)}, ${sunday.getFullYear()}`;
     }
 
-    /**
-     * Update the week badge
-     */
     updateWeekBadge() {
         document.getElementById('currentWeek').textContent = this.getCurrentWeek();
     }
 }
 
-// Export as global
 window.UI = UI;
