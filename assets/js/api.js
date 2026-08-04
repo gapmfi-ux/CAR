@@ -233,6 +233,11 @@ class ApiService {
     return this.request('/sales/delete', { id }, options);
   }
 
+async getNextCode(type, options = {}) {
+    this.log('getNextCode called for type:', type);
+    return this.request('/code/preview', { type }, options);
+}
+
   async testConnection(options = {}) {
     try {
       this.log('Testing connection...');
