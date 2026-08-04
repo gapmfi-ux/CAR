@@ -25,7 +25,6 @@ body {
     box-shadow: 0 20px 40px -12px rgba(0, 20, 40, 0.25);
     padding: 2rem 1.8rem 2.5rem;
     border: 1px solid #e9edf4;
-    transition: all 0.3s ease;
 }
 
 /* ===== HEADER ===== */
@@ -35,7 +34,7 @@ body {
     justify-content: space-between;
     border-bottom: 3px solid #0b2b4f;
     padding-bottom: 1rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     flex-wrap: wrap;
     gap: 1rem;
 }
@@ -70,46 +69,73 @@ body {
     font-size: 0.9rem;
 }
 
-.role-toggle {
+/* ===== TAB NAVIGATION ===== */
+.tab-navigation {
     display: flex;
-    align-items: center;
-    gap: 12px;
-    background: #eef3fa;
-    padding: 0.3rem 0.8rem 0.3rem 1.2rem;
-    border-radius: 40px;
-    border: 1px solid #cbd8e9;
+    gap: 4px;
+    background: #f0f5fd;
+    border-radius: 16px;
+    padding: 4px;
+    margin-bottom: 2rem;
+    border: 1px solid #dfe7f0;
 }
 
-.role-toggle label {
-    font-weight: 500;
+.tab-btn {
+    flex: 1;
+    padding: 0.8rem 1.5rem;
+    border: none;
+    background: transparent;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #5b6f88;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.tab-btn:hover {
+    background: rgba(31, 90, 138, 0.08);
     color: #1f3a5e;
-    font-size: 0.9rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
 }
 
-.role-toggle input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-    accent-color: #1f5a8a;
-}
-
-.role-indicator {
-    font-size: 0.75rem;
+.tab-btn.active {
     background: #1f5a8a;
     color: white;
-    padding: 0.2rem 0.8rem;
-    border-radius: 30px;
-    font-weight: 500;
-    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(31, 90, 138, 0.3);
+}
+
+.tab-btn i {
+    font-size: 1rem;
+}
+
+/* ===== TAB CONTENT ===== */
+.tab-content {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ===== SECTIONS ===== */
 .section {
-    margin-top: 2.4rem;
+    margin-top: 2rem;
 }
 
 .section-title {
@@ -117,16 +143,16 @@ body {
     align-items: baseline;
     gap: 10px;
     font-weight: 600;
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     color: #1f3a5e;
-    margin-bottom: 1.2rem;
+    margin-bottom: 1rem;
     border-left: 6px solid #2a6b9c;
     padding-left: 1rem;
 }
 
 .section-title i {
     color: #2a6b9c;
-    font-size: 1.3rem;
+    font-size: 1.1rem;
 }
 
 .record-count {
@@ -142,31 +168,34 @@ body {
 /* ===== TABLES ===== */
 .table-wrap {
     overflow-x: auto;
-    border-radius: 18px;
+    border-radius: 14px;
     border: 1px solid #dfe7f0;
     background: white;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.9rem;
-    min-width: 900px;
+    font-size: 0.88rem;
+    min-width: 800px;
 }
 
 th {
     background: #f0f5fd;
     color: #1d3b5e;
     font-weight: 600;
-    padding: 0.9rem 0.8rem;
+    padding: 0.8rem 0.7rem;
     text-align: left;
     border-bottom: 2px solid #d0dcec;
     white-space: nowrap;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
 
 td {
-    padding: 0.7rem 0.8rem;
+    padding: 0.6rem 0.7rem;
     border-bottom: 1px solid #e8eef6;
     vertical-align: middle;
 }
@@ -174,17 +203,17 @@ td {
 /* ===== INPUT ROW ===== */
 .input-row td {
     background: #fafdff;
-    padding: 0.5rem 0.8rem;
+    padding: 0.4rem 0.7rem;
 }
 
 .input-row input,
 .input-row select,
 .input-row textarea {
     width: 100%;
-    padding: 0.5rem 0.6rem;
+    padding: 0.45rem 0.6rem;
     border: 1px solid #ccd8e9;
-    border-radius: 12px;
-    font-size: 0.85rem;
+    border-radius: 10px;
+    font-size: 0.82rem;
     background: white;
     transition: 0.15s;
     font-family: inherit;
@@ -192,8 +221,8 @@ td {
 
 .input-row textarea {
     resize: vertical;
-    min-height: 52px;
-    line-height: 1.5;
+    min-height: 48px;
+    line-height: 1.4;
 }
 
 .input-row input:focus,
@@ -201,7 +230,7 @@ td {
 .input-row textarea:focus {
     outline: none;
     border-color: #2a6b9c;
-    box-shadow: 0 0 0 3px rgba(42, 107, 156, 0.15);
+    box-shadow: 0 0 0 3px rgba(42, 107, 156, 0.12);
 }
 
 .input-row select {
@@ -214,7 +243,7 @@ td {
     background: transparent;
     border: none;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: 0.9rem;
     padding: 0.2rem 0.5rem;
     border-radius: 30px;
     transition: 0.1s;
@@ -230,13 +259,13 @@ td {
     background: #1f5a8a;
     color: white;
     border: none;
-    padding: 0.4rem 1.2rem;
+    padding: 0.35rem 1rem;
     border-radius: 30px;
     font-weight: 500;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     cursor: pointer;
     transition: 0.15s;
 }
@@ -251,15 +280,15 @@ td {
 }
 
 .save-btn i {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 
 /* ===== STATUS BADGE ===== */
 .status-badge {
     background: #e2eaf5;
-    padding: 0.2rem 0.7rem;
+    padding: 0.15rem 0.6rem;
     border-radius: 40px;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 500;
     display: inline-block;
 }
@@ -270,23 +299,24 @@ td {
     white-space: pre-wrap;
     word-break: break-word;
     line-height: 1.6;
-    padding: 0.5rem 0.8rem;
+    padding: 0.4rem 0.7rem;
 }
 
 .remark-cell p {
-    margin: 0 0 0.4rem 0;
+    margin: 0 0 0.3rem 0;
 }
 
 .remark-cell p:last-child {
     margin-bottom: 0;
 }
 
+/* ===== SUPERVISOR CELLS ===== */
 .supervisor-cell {
     max-width: 180px;
     white-space: pre-wrap;
     word-break: break-word;
     line-height: 1.6;
-    padding: 0.5rem 0.8rem;
+    padding: 0.4rem 0.7rem;
     font-style: italic;
     color: #1f4970;
     background: #f6faff;
@@ -294,7 +324,7 @@ td {
 }
 
 .supervisor-cell p {
-    margin: 0 0 0.4rem 0;
+    margin: 0 0 0.3rem 0;
 }
 
 .supervisor-cell p:last-child {
@@ -306,30 +336,78 @@ td {
     font-style: normal;
 }
 
-/* ===== VIEW TOGGLES ===== */
-.officer-view .supervisor-col {
-    display: none !important;
-}
-.officer-view .supervisor-input-col {
-    display: none !important;
+/* ===== SUPERVISOR INPUT ===== */
+.supervisor-input-row td {
+    background: #f8fbff;
 }
 
-.supervisor-view .supervisor-col {
-    display: table-cell !important;
+.supervisor-input-row textarea {
+    width: 100%;
+    padding: 0.45rem 0.6rem;
+    border: 2px solid #2a6b9c;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 48px;
+    background: #fafdff;
+    transition: 0.15s;
 }
-.supervisor-view .supervisor-input-col {
-    display: table-cell !important;
+
+.supervisor-input-row textarea:focus {
+    outline: none;
+    border-color: #1f5a8a;
+    box-shadow: 0 0 0 3px rgba(31, 90, 138, 0.15);
+}
+
+/* ===== SUPERVISOR COMMENT BUTTON ===== */
+.comment-btn {
+    background: #2a6b9c;
+    color: white;
+    border: none;
+    padding: 0.3rem 0.9rem;
+    border-radius: 30px;
+    font-weight: 500;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.comment-btn:hover {
+    background: #1f5a8a;
+    transform: scale(0.97);
+}
+
+.comment-btn i {
+    font-size: 0.75rem;
+}
+
+/* ===== EMPTY STATE ===== */
+.empty-state {
+    text-align: center;
+    color: #8a9bb0;
+    padding: 2rem;
+}
+
+.empty-state i {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #cbd8e9;
 }
 
 /* ===== TOAST ===== */
 .toast {
     background: #1b4a72;
     color: white;
-    padding: 0.6rem 1.5rem;
+    padding: 0.5rem 1.5rem;
     border-radius: 60px;
     display: inline-block;
     font-weight: 500;
-    margin-top: 1.8rem;
+    margin-top: 1.5rem;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
     opacity: 0.95;
     animation: slideIn 0.3s ease;
@@ -356,6 +434,17 @@ td {
     margin-top: 1rem;
 }
 
+/* ===== OFFICER NAME BADGE ===== */
+.officer-badge {
+    display: inline-block;
+    background: #e5edf8;
+    color: #1f4970;
+    padding: 0.1rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1024px) {
     .report-container {
@@ -379,42 +468,64 @@ td {
     }
     
     .report-header h1 {
-        font-size: 1.4rem;
+        font-size: 1.3rem;
     }
     
     .section-title {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
     }
     
-    .role-toggle {
-        padding: 0.2rem 0.6rem 0.2rem 1rem;
-    }
-    
-    .role-toggle label {
+    .tab-btn {
         font-size: 0.8rem;
+        padding: 0.6rem 0.8rem;
     }
-}
-
-@media (max-width: 480px) {
-    .report-header h1 small {
+    
+    .tab-btn i {
+        display: none;
+    }
+    
+    th {
         font-size: 0.7rem;
-        padding: 0.15rem 0.6rem;
+        padding: 0.5rem 0.4rem;
     }
     
-    .week-badge {
-        font-size: 0.75rem;
-        padding: 0.3rem 0.8rem;
-    }
-    
-    .save-btn {
-        padding: 0.3rem 0.8rem;
-        font-size: 0.75rem;
+    td {
+        padding: 0.4rem 0.4rem;
+        font-size: 0.8rem;
     }
     
     .input-row input,
     .input-row select,
     .input-row textarea {
         font-size: 0.75rem;
-        padding: 0.4rem 0.4rem;
+        padding: 0.35rem 0.4rem;
+    }
+    
+    .save-btn {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .report-header h1 small {
+        font-size: 0.65rem;
+        padding: 0.1rem 0.5rem;
+    }
+    
+    .week-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.6rem;
+    }
+    
+    .tab-navigation {
+        flex-direction: column;
+        gap: 2px;
+        padding: 2px;
+    }
+    
+    .tab-btn {
+        padding: 0.5rem;
+        font-size: 0.75rem;
     }
 }
