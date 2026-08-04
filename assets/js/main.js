@@ -6,7 +6,7 @@
 class CreditOfficerApp {
     constructor() {
         this.ui = new UI();
-        this.api = window.api;
+        this.api = window.API; // Use the new API service
         this.supervisor = window.supervisor;
         this.currentTab = 'officer';
         this.isLoading = false;
@@ -24,6 +24,9 @@ class CreditOfficerApp {
             // Setup event listeners
             this.setupEventListeners();
             
+            // Test connection first
+            await this.testConnection();
+            
             // Load data for both views
             await this.loadAllData();
             
@@ -35,6 +38,22 @@ class CreditOfficerApp {
         } catch (error) {
             console.error('Initialization error:', error);
             this.ui.showToast('❌ Failed to initialize: ' + error.message, true, 5000);
+        }
+    }
+
+    async testConnection() {
+        try {
+            const result = await this.api.testConnection();
+            if (!result.connected) {
+                this.ui.showToast('⚠️ ' + result.message, true, 3000);
+            } else {
+                console.log('✅ Connection successful');
+            }
+            return result;
+        } catch (error) {
+            console.error('Connection test failed:', error);
+            this.ui.showToast('⚠️ Cannot connect to server: ' + error.message, true, 5000);
+            return { connected: false, message: error.message };
         }
     }
 
@@ -121,22 +140,27 @@ class CreditOfficerApp {
         this.isLoading = true;
         
         try {
-            const [loans, recoveries, sales] = await Promise.all([
-                this.api.getLoans(),
-                this.api.getRecoveries(),
-                this.api.getSales()
-            ]);
+            // Use batch request for better performance
+            const results = await this.api.batchRequest({
+                loans: { action: '/loan/list', data: {} },
+                recoveries: { action: '/recovery/list', data: {} },
+                sales: { action: '/sales/list', data: {} }
+            });
+            
+            const loans = results.loans?.data || [];
+            const recoveries = results.recoveries?.data || [];
+            const sales = results.sales?.data || [];
             
             // Officer view
-            this.ui.renderLoanTable(loans || []);
-            this.ui.renderRecoveryTable(recoveries || []);
-            this.ui.renderSalesTable(sales || []);
+            this.ui.renderLoanTable(loans);
+            this.ui.renderRecoveryTable(recoveries);
+            this.ui.renderSalesTable(sales);
             
             // Supervisor view
             if (this.supervisor) {
-                this.supervisor.renderLoanTable(loans || []);
-                this.supervisor.renderRecoveryTable(recoveries || []);
-                this.supervisor.renderSalesTable(sales || []);
+                this.supervisor.renderLoanTable(loans);
+                this.supervisor.renderRecoveryTable(recoveries);
+                this.supervisor.renderSalesTable(sales);
             }
             
         } catch (error) {
@@ -171,6 +195,9 @@ class CreditOfficerApp {
             this.ui.addOfficerLoanRow(result);
             this.ui.clearLoanForm();
             
+            // Clear cache for loan list
+            this.api.clearCache('/loan/list');
+            
             // Refresh supervisor view
             if (this.supervisor) {
                 await this.supervisor.refreshAll();
@@ -204,6 +231,8 @@ class CreditOfficerApp {
             this.ui.addOfficerRecoveryRow(result);
             this.ui.clearRecoveryForm();
             
+            this.api.clearCache('/recovery/list');
+            
             if (this.supervisor) {
                 await this.supervisor.refreshAll();
             }
@@ -235,6 +264,8 @@ class CreditOfficerApp {
             const result = await this.api.createSales(data);
             this.ui.addOfficerSalesRow(result);
             this.ui.clearSalesForm();
+            
+            this.api.clearCache('/sales/list');
             
             if (this.supervisor) {
                 await this.supervisor.refreshAll();
