@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Credit Officer Activity Report</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <link rel="icon" href="assets/images/favicon.ico" />
+</head>
+<body>
+    <div class="report-container" id="app">
+
+        <!-- HEADER -->
+        <div class="report-header">
+            <h1>
+                <i class="fas fa-user-tie" style="color:#1f5a8a;"></i>
+                Credit Officer Activity Report
+                <small>weekly</small>
+            </h1>
+            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                <div class="role-toggle">
+                    <label for="roleSwitch">
+                        <i class="fas fa-user-check"></i> Supervisor View
+                        <input type="checkbox" id="roleSwitch" />
+                    </label>
+                    <span id="roleIndicator" class="role-indicator" style="background: #6b8ba4;">Officer</span>
+                </div>
+                <span class="week-badge"><i class="far fa-calendar-alt"></i> <span id="currentWeek">Aug 2 – 8, 2026</span></span>
+            </div>
+        </div>
+
+        <!-- =========== LOAN PIPELINE =========== -->
+        <div class="section">
+            <div class="section-title">
+                <i class="fas fa-hand-holding-usd"></i> Loan Pipeline
+                <span class="record-count" id="loanCount">0</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Product/Loan Type</th>
+                            <th>Customer Name</th>
+                            <th>Loan Amount</th>
+                            <th>Current Stage</th>
+                            <th>Remarks</th>
+                            <th class="supervisor-col">Supervisor Comments</th>
+                            <th style="text-align:center; min-width: 80px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="loanTableBody">
+                        <!-- Data loaded dynamically -->
+                        <tr class="input-row" id="loanInputRow">
+                            <td><input type="text" id="loanType" placeholder="e.g. SME Loan" /></td>
+                            <td><input type="text" id="loanCustomer" placeholder="Full name" /></td>
+                            <td><input type="number" id="loanAmount" placeholder="0" step="0.01" /></td>
+                            <td>
+                                <select id="loanStage">
+                                    <option value="Review">Review</option>
+                                    <option value="Approved">Approved</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Declined">Declined</option>
+                                </select>
+                            </td>
+                            <td><textarea id="loanRemarks" placeholder="Remarks&#10;Line 1&#10;Line 2" rows="2"></textarea></td>
+                            <td class="supervisor-input-col"><textarea id="loanSupervisor" placeholder="Supervisor comments&#10;(visible to supervisor only)" rows="2"></textarea></td>
+                            <td style="text-align:center;">
+                                <button class="save-btn" id="saveLoanBtn"><i class="fas fa-check"></i> Save</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- =========== RECOVERY ACTIVITIES =========== -->
+        <div class="section">
+            <div class="section-title">
+                <i class="fas fa-hand-holding-heart"></i> Recovery Activities
+                <span class="record-count" id="recoveryCount">0</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Customer Name</th>
+                            <th>Outstanding Balance</th>
+                            <th>Loan Type</th>
+                            <th>Location</th>
+                            <th>Recovery Action Taken</th>
+                            <th class="supervisor-col">Supervisor Comments</th>
+                            <th style="text-align:center; min-width: 80px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recoveryTableBody">
+                        <!-- Data loaded dynamically -->
+                        <tr class="input-row" id="recoveryInputRow">
+                            <td><input type="text" id="recCustomer" placeholder="Customer name" /></td>
+                            <td><input type="number" id="recBalance" placeholder="0.00" step="0.01" /></td>
+                            <td><input type="text" id="recLoanType" placeholder="e.g. SME" /></td>
+                            <td><input type="text" id="recLocation" placeholder="City" /></td>
+                            <td><textarea id="recAction" placeholder="Action taken&#10;e.g. called, visited" rows="2"></textarea></td>
+                            <td class="supervisor-input-col"><textarea id="recSupervisor" placeholder="Supervisor comments" rows="2"></textarea></td>
+                            <td style="text-align:center;">
+                                <button class="save-btn" id="saveRecoveryBtn"><i class="fas fa-check"></i> Save</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- =========== SALES ACTIVITIES =========== -->
+        <div class="section">
+            <div class="section-title">
+                <i class="fas fa-chart-line"></i> Sales Activities
+                <span class="record-count" id="salesCount">0</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Location</th>
+                            <th>Date</th>
+                            <th>Purpose</th>
+                            <th>Status</th>
+                            <th>Remarks</th>
+                            <th class="supervisor-col">Supervisor Comments</th>
+                            <th style="text-align:center; min-width: 80px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="salesTableBody">
+                        <!-- Data loaded dynamically -->
+                        <tr class="input-row" id="salesInputRow">
+                            <td><input type="text" id="salesLocation" placeholder="Location" /></td>
+                            <td><input type="text" id="salesDate" placeholder="DD-MMM" /></td>
+                            <td><input type="text" id="salesPurpose" placeholder="Purpose" /></td>
+                            <td>
+                                <select id="salesStatus">
+                                    <option value="Open">Open</option>
+                                    <option value="Done">Done</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Closed">Closed</option>
+                                </select>
+                            </td>
+                            <td><textarea id="salesRemarks" placeholder="Remarks&#10;Line 1&#10;Line 2" rows="2"></textarea></td>
+                            <td class="supervisor-input-col"><textarea id="salesSupervisor" placeholder="Supervisor comments" rows="2"></textarea></td>
+                            <td style="text-align:center;">
+                                <button class="save-btn" id="saveSalesBtn"><i class="fas fa-check"></i> Save</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TOAST -->
+        <div class="flex-end mt-2">
+            <div id="statusMessage" class="toast" style="display: none; background: #1a4a6e;">
+                <i class="fas fa-check-circle" style="margin-right: 8px;"></i>
+                <span id="statusText">Record saved successfully</span>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div style="margin-top: 2rem; border-top: 1px dashed #cbdae8; padding-top: 1.2rem; display: flex; justify-content: space-between; flex-wrap: wrap; color: #3d5f7f; font-size:0.9rem;">
+            <span><i class="fas fa-google"></i> Auto-save to Google Sheet • validation enabled</span>
+            <span><i class="fas fa-sync-alt fa-fw"></i> Input row clears after save • remarks support paragraphing</span>
+            <span><i class="fas fa-users"></i> <span id="viewModeLabel">Officer view</span> — supervisor comments hidden</span>
+        </div>
+    </div>
+
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/ui.js"></script>
+    <script src="assets/js/main.js"></script>
+</body>
+</html>
