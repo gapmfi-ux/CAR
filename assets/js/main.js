@@ -10,14 +10,39 @@ class CreditOfficerApp {
         this.supervisor = window.supervisor;
         this.currentTab = 'officer';
         this.isLoading = false;
+        
+        // Set user name - can be customized
+        this.setUserName('Credit Officer');
+        
         this.init();
+    }
+
+    /**
+     * Set the user name displayed in the header
+     * @param {string} name - User's display name
+     */
+    setUserName(name) {
+        const userNameElement = document.getElementById('userName');
+        if (userNameElement) {
+            userNameElement.textContent = name || 'Credit Officer';
+        }
+        // Also update the API
+        if (this.api) {
+            this.api.setUser(name || 'Credit Officer');
+        }
+    }
+
+    /**
+     * Get the current user name
+     * @returns {string} - Current user name
+     */
+    getUserName() {
+        const userNameElement = document.getElementById('userName');
+        return userNameElement ? userNameElement.textContent : 'Credit Officer';
     }
 
     async init() {
         try {
-            // Update week badge
-            this.ui.updateWeekBadge();
-            
             // Setup tab navigation
             this.setupTabs();
             
@@ -34,6 +59,7 @@ class CreditOfficerApp {
             this.ui.showToast('✅ Data loaded successfully', false, 2000);
             
             console.log('✅ Credit Officer Activity Report initialized');
+            console.log('👤 User:', this.getUserName());
             
         } catch (error) {
             console.error('Initialization error:', error);
@@ -72,10 +98,12 @@ class CreditOfficerApp {
     }
 
     switchTab(tabId) {
+        // Update tab buttons
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.tab === tabId);
         });
         
+        // Update tab content
         document.querySelectorAll('.tab-content').forEach(content => {
             content.classList.toggle('active', content.id === tabId + 'View');
         });
@@ -133,6 +161,64 @@ class CreditOfficerApp {
         });
     }
 
+    /**
+     * Extract data from API response - handles multiple response formats
+     */
+    extractData(response) {
+        if (!response) return [];
+        
+        // If response has an error, return empty array
+        if (response.error) {
+            console.warn('API returned error:', response.error);
+            return [];
+        }
+        
+        // If response has a data property that is an array
+        if (response.data && Array.isArray(response.data)) {
+            return response.data;
+        }
+        
+        // If response itself is an array
+        if (Array.isArray(response)) {
+            return response;
+        }
+        
+        // If response has a data property that is an object with data property
+        if (response.data && response.data.data && Array.isArray(response.data.data)) {
+            return response.data.data;
+        }
+        
+        // Log unexpected format
+        console.warn('Unexpected response format:', response);
+        return [];
+    }
+
+    /**
+     * Extract a single record from API response
+     */
+    extractSingleRecord(response) {
+        if (!response) return null;
+        
+        // If response has a data property
+        if (response.data) {
+            // If data is an array, return first item or null
+            if (Array.isArray(response.data)) {
+                return response.data[0] || null;
+            }
+            // If data is an object
+            if (typeof response.data === 'object') {
+                return response.data;
+            }
+        }
+        
+        // If response itself is the record
+        if (typeof response === 'object' && !response.error) {
+            return response;
+        }
+        
+        return null;
+    }
+
     async loadAllData() {
         if (this.isLoading) return;
         this.isLoading = true;
@@ -179,38 +265,6 @@ class CreditOfficerApp {
         } finally {
             this.isLoading = false;
         }
-    }
-
-    /**
-     * Extract data from API response - handles multiple response formats
-     */
-    extractData(response) {
-        if (!response) return [];
-        
-        // If response has an error, return empty array
-        if (response.error) {
-            console.warn('API returned error:', response.error);
-            return [];
-        }
-        
-        // If response has a data property that is an array
-        if (response.data && Array.isArray(response.data)) {
-            return response.data;
-        }
-        
-        // If response itself is an array
-        if (Array.isArray(response)) {
-            return response;
-        }
-        
-        // If response has a data property that is an object with data property
-        if (response.data && response.data.data && Array.isArray(response.data.data)) {
-            return response.data.data;
-        }
-        
-        // Log unexpected format
-        console.warn('Unexpected response format:', response);
-        return [];
     }
 
     // ===== LOAN SAVE =====
@@ -339,32 +393,6 @@ class CreditOfficerApp {
         }
     }
 
-    /**
-     * Extract a single record from API response
-     */
-    extractSingleRecord(response) {
-        if (!response) return null;
-        
-        // If response has a data property
-        if (response.data) {
-            // If data is an array, return first item or null
-            if (Array.isArray(response.data)) {
-                return response.data[0] || null;
-            }
-            // If data is an object
-            if (typeof response.data === 'object') {
-                return response.data;
-            }
-        }
-        
-        // If response itself is the record
-        if (typeof response === 'object' && !response.error) {
-            return response;
-        }
-        
-        return null;
-    }
-
     // ===== VALIDATION =====
     validateLoan(data) {
         const errors = [];
@@ -399,3 +427,11 @@ class CreditOfficerApp {
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new CreditOfficerApp();
 });
+
+// Expose methods globally for debugging
+console.log('📋 Available methods:');
+console.log('  - window.app.setUserName("Your Name") - Set user name');
+console.log('  - window.app.refreshData() - Refresh all data');
+console.log('  - window.app.api.getLoans() - Fetch loans');
+console.log('  - window.app.api.getRecoveries() - Fetch recoveries');
+console.log('  - window.app.api.getSales() - Fetch sales');
