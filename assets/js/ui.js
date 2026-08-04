@@ -95,6 +95,26 @@ class UI {
         return td;
     }
 
+    // ===== SUPERVISOR CELL RENDERER (for Officer view) =====
+    createSupervisorCell(text) {
+        const td = document.createElement('td');
+        td.className = 'supervisor-cell';
+
+        if (!text || text.trim() === '') {
+            td.innerHTML = '<span class="no-comment"><i class="far fa-comment"></i> No comment</span>';
+            return td;
+        }
+
+        // Comments stored as multiple entries separated by "\n---\n"
+        const parts = (text || '').split(/\n---\n/).filter(p => p.trim() !== '');
+        parts.forEach(part => {
+            const p = document.createElement('p');
+            p.textContent = part.trim();
+            td.appendChild(p);
+        });
+        return td;
+    }
+
     // ===== OFFICER VIEW - LOAN TABLE =====
 
     renderLoanTable(loans) {
@@ -137,6 +157,8 @@ class UI {
         
         tr.appendChild(this.createStatusCell(loan.stage || loan.Stage || 'Review'));
         tr.appendChild(this.createParagraphCell(loan.remarks || loan.Remarks || '', 'remark-cell'));
+        // Supervisor comments visible on officer row
+        tr.appendChild(this.createSupervisorCell(loan.supervisor || loan.SupervisorComments || ''));
         
         const actionTd = document.createElement('td');
         actionTd.style.textAlign = 'center';
@@ -221,6 +243,8 @@ class UI {
         });
         
         tr.appendChild(this.createParagraphCell(recovery.actionTaken || recovery.ActionTaken || '', 'remark-cell'));
+        // Supervisor comments visible on officer row
+        tr.appendChild(this.createSupervisorCell(recovery.supervisor || recovery.SupervisorComments || ''));
         
         const actionTd = document.createElement('td');
         actionTd.style.textAlign = 'center';
@@ -303,6 +327,8 @@ class UI {
         
         tr.appendChild(this.createStatusCell(sale.status || sale.Status || 'Open'));
         tr.appendChild(this.createParagraphCell(sale.remarks || sale.Remarks || '', 'remark-cell'));
+        // Supervisor comments visible on officer row
+        tr.appendChild(this.createSupervisorCell(sale.supervisor || sale.SupervisorComments || ''));
         
         const actionTd = document.createElement('td');
         actionTd.style.textAlign = 'center';
