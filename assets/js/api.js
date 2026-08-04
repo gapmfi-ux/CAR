@@ -1,4 +1,7 @@
-
+/**
+ * API Module - Google Apps Script Communication
+ * Uses JSONP (script tag) approach to bypass CORS
+ */
 
 class ApiService {
   constructor() {
@@ -6,8 +9,8 @@ class ApiService {
     this.BASE_URL = 'https://script.google.com/macros/s/AKfycby9kpq1umFLzGJTqm4nOsFt46HmiJvTqvs6wyXjQFOinCqT9CG_0QBAYekb2UgtXg8sQg/exec';
     this.cache = new Map();
     this.cacheTimeout = 5 * 60 * 1000; // 5 minutes cache
-    this.pendingRequests = new Map(); // Deduplicate concurrent requests
-    this.debug = false; // Set to true for debugging
+    this.pendingRequests = new Map();
+    this.debug = true; // Set to true for debugging
     this.requestTimeout = 30000; // 30 seconds
   }
 
@@ -23,7 +26,6 @@ class ApiService {
 
   /**
    * Generic request method using JSONP (script tag)
-   * This bypasses CORS entirely
    */
   async request(action, data = {}, options = {}) {
     const cacheKey = `${action}_${JSON.stringify(data)}`;
@@ -40,7 +42,7 @@ class ApiService {
       }
     }
 
-    // Deduplicate concurrent requests for the same action
+    // Deduplicate concurrent requests
     if (this.pendingRequests.has(cacheKey)) {
       this.log(`Deduplicating request for ${action}`);
       return this.pendingRequests.get(cacheKey);
@@ -59,7 +61,7 @@ class ApiService {
         url.searchParams.append('callback', callbackName);
         
         const fullUrl = url.toString();
-        this.log(`Requesting: ${action}`, data);
+        this.log(`Requesting: ${action}`, 'Data:', data, 'URL:', fullUrl);
         
         // Set timeout
         const timeoutId = setTimeout(() => {
@@ -89,18 +91,20 @@ class ApiService {
             });
             resolve(response);
           } else {
-            reject(new Error((response && response.error) || 'API request failed'));
+            const errorMsg = (response && response.error) || 'API request failed';
+            this.error(`API error for ${action}:`, errorMsg);
+            reject(new Error(errorMsg));
           }
         };
         
         // Create and add the script tag
         const script = document.createElement('script');
         script.src = fullUrl;
-        script.onerror = () => {
+        script.onerror = (error) => {
           clearTimeout(timeoutId);
           delete window[callbackName];
           if (script.parentNode) script.parentNode.removeChild(script);
-          this.error(`Script error for ${action}`);
+          this.error(`Script error for ${action}`, error);
           reject(new Error('Network error - failed to connect to server'));
         };
         
@@ -135,7 +139,10 @@ class ApiService {
       promises.push(
         this.request(action, data, { useCache: true })
           .then(result => { results[key] = result; })
-          .catch(err => { results[key] = { error: err.message }; })
+          .catch(err => { 
+            results[key] = { error: err.message };
+            this.error(`Batch request failed for ${key}:`, err.message);
+          })
       );
     }
     
@@ -144,7 +151,7 @@ class ApiService {
   }
 
   /**
-   * Clear cache for specific action or all
+   * Clear cache
    */
   clearCache(action = null) {
     if (action) {
@@ -166,7 +173,6 @@ class ApiService {
   // CREDIT OFFICER ACTIVITY REPORT API
   // ============================================
 
-  // ===== LOAN =====
   async createLoan(data, options = {}) {
     this.log('createLoan called with:', data);
     return this.request('/loan/create', data, options);
@@ -187,7 +193,6 @@ class ApiService {
     return this.request('/loan/delete', { id }, options);
   }
 
-  // ===== RECOVERY =====
   async createRecovery(data, options = {}) {
     this.log('createRecovery called with:', data);
     return this.request('/recovery/create', data, options);
@@ -208,7 +213,6 @@ class ApiService {
     return this.request('/recovery/delete', { id }, options);
   }
 
-  // ===== SALES =====
   async createSales(data, options = {}) {
     this.log('createSales called with:', data);
     return this.request('/sales/create', data, options);
@@ -229,15 +233,18 @@ class ApiService {
     return this.request('/sales/delete', { id }, options);
   }
 
-  // ===== TEST CONNECTION =====
   async testConnection(options = {}) {
     try {
+      this.log('Testing connection...');
       const response = await this.request('test', {}, options);
+      this.log('Connection test response:', response);
       return {
         connected: response && response.success !== false,
-        message: response && response.success !== false ? 'Connected to server' : 'Connection failed'
+        message: response && response.success !== false ? 'Connected to server' : 'Connection failed',
+        data: response
       };
     } catch (error) {
+      this.error('Connection test failed:', error);
       return {
         connected: false,
         message: 'Connection failed: ' + error.message
@@ -248,36 +255,8 @@ class ApiService {
 
 // Create global API instance
 window.API = new ApiService();
-window.api = window.API; // Alias for backward compatibility
-
-// For backward compatibility with existing code
-window.callGAS = async function(action, data = {}) {
-  console.warn('callGAS is deprecated. Use API.[method] instead.');
-  
-  const actionMap = {
-    // Loan
-    '/loan/create': () => API.createLoan(data),
-    '/loan/list': () => API.getLoans(),
-    '/loan/update': () => API.updateLoan(data.id, data.data),
-    '/loan/delete': () => API.deleteLoan(data.id),
-    // Recovery
-    '/recovery/create': () => API.createRecovery(data),
-    '/recovery/list': () => API.getRecoveries(),
-    '/recovery/update': () => API.updateRecovery(data.id, data.data),
-    '/recovery/delete': () => API.deleteRecovery(data.id),
-    // Sales
-    '/sales/create': () => API.createSales(data),
-    '/sales/list': () => API.getSales(),
-    '/sales/update': () => API.updateSales(data.id, data.data),
-    '/sales/delete': () => API.deleteSales(data.id),
-  };
-  
-  const apiCall = actionMap[action];
-  if (apiCall) {
-    return apiCall();
-  }
-  
-  throw new Error(`Unknown action: ${action}`);
-};
+window.api = window.API;
 
 console.log('✅ API Service initialized with JSONP approach');
+console.log('📍 API URL:', window.API.BASE_URL);
+console.log('🔍 Debug mode:', window.API.debug);
