@@ -10,6 +10,19 @@ class UI {
         this.toastTimeout = null;
     }
 
+    // ===== DATA EXTRACTION HELPERS =====
+    
+    extractData(response) {
+        if (!response) return [];
+        if (response.error) return [];
+        if (response.data && Array.isArray(response.data)) return response.data;
+        if (Array.isArray(response)) return response;
+        if (response.data && response.data.data && Array.isArray(response.data.data)) {
+            return response.data.data;
+        }
+        return [];
+    }
+
     // ===== TOAST NOTIFICATIONS =====
 
     showToast(message, isError = false, duration = 3000) {
@@ -93,14 +106,16 @@ class UI {
         }
         tbody.appendChild(inputRow);
         
-        if (loans && loans.length > 0) {
-            loans.forEach(loan => {
+        const loansArray = Array.isArray(loans) ? loans : this.extractData(loans);
+        
+        if (loansArray && loansArray.length > 0) {
+            loansArray.forEach(loan => {
                 const row = this.createOfficerLoanRow(loan);
                 tbody.insertBefore(row, inputRow);
             });
         }
         
-        document.getElementById('loanCount').textContent = loans ? loans.length : 0;
+        document.getElementById('loanCount').textContent = loansArray ? loansArray.length : 0;
     }
 
     createOfficerLoanRow(loan) {
@@ -175,14 +190,16 @@ class UI {
         }
         tbody.appendChild(inputRow);
         
-        if (recoveries && recoveries.length > 0) {
-            recoveries.forEach(recovery => {
+        const recoveriesArray = Array.isArray(recoveries) ? recoveries : this.extractData(recoveries);
+        
+        if (recoveriesArray && recoveriesArray.length > 0) {
+            recoveriesArray.forEach(recovery => {
                 const row = this.createOfficerRecoveryRow(recovery);
                 tbody.insertBefore(row, inputRow);
             });
         }
         
-        document.getElementById('recoveryCount').textContent = recoveries ? recoveries.length : 0;
+        document.getElementById('recoveryCount').textContent = recoveriesArray ? recoveriesArray.length : 0;
     }
 
     createOfficerRecoveryRow(recovery) {
@@ -257,14 +274,16 @@ class UI {
         }
         tbody.appendChild(inputRow);
         
-        if (sales && sales.length > 0) {
-            sales.forEach(sale => {
+        const salesArray = Array.isArray(sales) ? sales : this.extractData(sales);
+        
+        if (salesArray && salesArray.length > 0) {
+            salesArray.forEach(sale => {
                 const row = this.createOfficerSalesRow(sale);
                 tbody.insertBefore(row, inputRow);
             });
         }
         
-        document.getElementById('salesCount').textContent = sales ? sales.length : 0;
+        document.getElementById('salesCount').textContent = salesArray ? salesArray.length : 0;
     }
 
     createOfficerSalesRow(sale) {
