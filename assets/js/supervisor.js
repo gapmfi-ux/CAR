@@ -5,9 +5,38 @@
 
 class SupervisorUI {
     constructor() {
-        this.api = window.api;
+        this.api = window.API;
         this.ui = window.ui;
         this.currentOfficer = 'All Officers';
+    }
+
+    // ===== DATA EXTRACTION HELPERS =====
+    
+    /**
+     * Extract data from API response - handles multiple formats
+     */
+    extractData(response) {
+        if (!response) return [];
+        
+        if (response.error) {
+            console.warn('API returned error:', response.error);
+            return [];
+        }
+        
+        if (response.data && Array.isArray(response.data)) {
+            return response.data;
+        }
+        
+        if (Array.isArray(response)) {
+            return response;
+        }
+        
+        if (response.data && response.data.data && Array.isArray(response.data.data)) {
+            return response.data.data;
+        }
+        
+        console.warn('Unexpected response format in supervisor:', response);
+        return [];
     }
 
     // ===== LOAN TABLE - SUPERVISOR =====
@@ -19,18 +48,21 @@ class SupervisorUI {
             tbody.removeChild(tbody.firstChild);
         }
         
-        if (!loans || loans.length === 0) {
+        // Ensure loans is an array
+        const loansArray = Array.isArray(loans) ? loans : this.extractData(loans);
+        
+        if (!loansArray || loansArray.length === 0) {
             this.showEmptyState(tbody, 'No loan records found');
             document.getElementById('supervisorLoanCount').textContent = '0';
             return;
         }
         
-        loans.forEach((loan, index) => {
+        loansArray.forEach((loan, index) => {
             const row = this.createSupervisorLoanRow(loan, index);
             tbody.appendChild(row);
         });
         
-        document.getElementById('supervisorLoanCount').textContent = loans.length;
+        document.getElementById('supervisorLoanCount').textContent = loansArray.length;
     }
 
     createSupervisorLoanRow(loan, index) {
@@ -104,18 +136,20 @@ class SupervisorUI {
             tbody.removeChild(tbody.firstChild);
         }
         
-        if (!recoveries || recoveries.length === 0) {
+        const recoveriesArray = Array.isArray(recoveries) ? recoveries : this.extractData(recoveries);
+        
+        if (!recoveriesArray || recoveriesArray.length === 0) {
             this.showEmptyState(tbody, 'No recovery records found');
             document.getElementById('supervisorRecoveryCount').textContent = '0';
             return;
         }
         
-        recoveries.forEach((recovery, index) => {
+        recoveriesArray.forEach((recovery, index) => {
             const row = this.createSupervisorRecoveryRow(recovery, index);
             tbody.appendChild(row);
         });
         
-        document.getElementById('supervisorRecoveryCount').textContent = recoveries.length;
+        document.getElementById('supervisorRecoveryCount').textContent = recoveriesArray.length;
     }
 
     createSupervisorRecoveryRow(recovery, index) {
@@ -191,18 +225,20 @@ class SupervisorUI {
             tbody.removeChild(tbody.firstChild);
         }
         
-        if (!sales || sales.length === 0) {
+        const salesArray = Array.isArray(sales) ? sales : this.extractData(sales);
+        
+        if (!salesArray || salesArray.length === 0) {
             this.showEmptyState(tbody, 'No sales records found');
             document.getElementById('supervisorSalesCount').textContent = '0';
             return;
         }
         
-        sales.forEach((sale, index) => {
+        salesArray.forEach((sale, index) => {
             const row = this.createSupervisorSalesRow(sale, index);
             tbody.appendChild(row);
         });
         
-        document.getElementById('supervisorSalesCount').textContent = sales.length;
+        document.getElementById('supervisorSalesCount').textContent = salesArray.length;
     }
 
     createSupervisorSalesRow(sale, index) {
@@ -269,7 +305,6 @@ class SupervisorUI {
     // ===== COMMENT MODAL =====
 
     openCommentModal(type, index, record, currentComment) {
-        // Create modal overlay
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
         overlay.style.cssText = `
@@ -348,11 +383,9 @@ class SupervisorUI {
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
         
-        // Focus textarea
         const textarea = modal.querySelector('#commentInput');
         textarea.focus();
         
-        // Close handlers
         const closeModal = () => {
             document.body.removeChild(overlay);
         };
@@ -362,17 +395,13 @@ class SupervisorUI {
             if (e.target === overlay) closeModal();
         });
         
-        // Save handler
         modal.querySelector('#saveComment').addEventListener('click', async () => {
             const comment = textarea.value.trim();
-            
-            // Update the record with comment
             const updatedRecord = { ...record, supervisor: comment };
             
             try {
                 this.ui.showToast('⏳ Saving comment...', false, 0);
                 
-                // Call appropriate API endpoint
                 let result;
                 if (type === 'loan') {
                     result = await this.api.updateLoan(index, updatedRecord);
@@ -382,7 +411,7 @@ class SupervisorUI {
                     result = await this.api.updateSales(index, updatedRecord);
                 }
                 
-                // Re-render supervisor tables with updated data
+                this.api.clearCache(`/${type}/list`);
                 await this.refreshAll();
                 
                 this.ui.showToast('✅ Comment saved successfully', false, 2500);
@@ -394,7 +423,6 @@ class SupervisorUI {
             }
         });
         
-        // Keyboard shortcut: Ctrl+Enter to save
         textarea.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key === 'Enter') {
                 modal.querySelector('#saveComment').click();
@@ -407,17 +435,21 @@ class SupervisorUI {
     async refreshAll() {
         try {
             const [loans, recoveries, sales] = await Promise.all([
-                this.api.getLoans(),
-                this.api.getRecoveries(),
-                this.api.getSales()
+                this.api.getLoans({ useCache: false }),
+                this.api.getRecoveries({ useCache: false }),
+                this.api.getSales({ useCache: false })
             ]);
             
-            this.renderLoanTable(loans || []);
-            this.renderRecoveryTable(recoveries || []);
-            this.renderSalesTable(sales || []);
+            // Pass the raw responses - the render methods will handle extraction
+            this.renderLoanTable(loans);
+            this.renderRecoveryTable(recoveries);
+            this.renderSalesTable(sales);
+            
+            console.log('✅ Supervisor tables refreshed');
             
         } catch (error) {
             console.error('Error refreshing supervisor data:', error);
+            this.ui.showToast('⚠️ Error refreshing supervisor view', true, 3000);
         }
     }
 
