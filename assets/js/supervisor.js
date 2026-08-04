@@ -5,8 +5,32 @@
 
 class SupervisorUI {
     constructor() {
-        this.api = window.API;
-        this.ui = window.ui;
+        // Provide safe fallbacks if global UI/API aren't yet available
+        this.api = window.API || {
+            getLoans: async () => [],
+            getRecoveries: async () => [],
+            getSales: async () => [],
+            updateLoan: async () => ({}),
+            updateRecovery: async () => ({}),
+            updateSales: async () => ({}),
+            clearCache: () => {}
+        };
+
+        this.ui = window.ui || {
+            createStatusCell: function(status) {
+                const td = document.createElement('td');
+                td.textContent = status || '';
+                return td;
+            },
+            createParagraphCell: function(text, cls) {
+                const td = document.createElement('td');
+                td.className = cls || '';
+                td.textContent = text || '';
+                return td;
+            },
+            showToast: function() {}
+        };
+
         this.currentOfficer = 'All Officers';
     }
 
@@ -67,6 +91,7 @@ class SupervisorUI {
 
     createSupervisorLoanRow(loan, index) {
         const tr = document.createElement('tr');
+        const ui = this.ui || window.ui; // local reference for robustness
         
         // Credit Officer
         const officerTd = document.createElement('td');
@@ -90,10 +115,10 @@ class SupervisorUI {
         tr.appendChild(amountTd);
         
         // Stage
-        tr.appendChild(this.ui.createStatusCell(loan.stage || loan.Stage || 'Review'));
+        tr.appendChild((ui && typeof ui.createStatusCell === 'function') ? ui.createStatusCell(loan.stage || loan.Stage || 'Review') : (function(){ const td=document.createElement('td'); td.textContent = loan.stage || loan.Stage || 'Review'; return td; })());
         
         // Remarks
-        tr.appendChild(this.ui.createParagraphCell(loan.remarks || loan.Remarks || '', 'remark-cell'));
+        tr.appendChild((ui && typeof ui.createParagraphCell === 'function') ? ui.createParagraphCell(loan.remarks || loan.Remarks || '', 'remark-cell') : (function(){ const td=document.createElement('td'); td.className='remark-cell'; td.textContent = loan.remarks || loan.Remarks || ''; return td; })());
         
         // Supervisor Comments (with edit capability)
         const commentTd = document.createElement('td');
@@ -243,6 +268,7 @@ class SupervisorUI {
 
     createSupervisorSalesRow(sale, index) {
         const tr = document.createElement('tr');
+        const ui = this.ui || window.ui;
         
         // Credit Officer
         const officerTd = document.createElement('td');
@@ -265,10 +291,10 @@ class SupervisorUI {
         tr.appendChild(purposeTd);
         
         // Status
-        tr.appendChild(this.ui.createStatusCell(sale.status || sale.Status || 'Open'));
+        tr.appendChild((ui && typeof ui.createStatusCell === 'function') ? ui.createStatusCell(sale.status || sale.Status || 'Open') : (function(){ const td=document.createElement('td'); td.textContent = sale.status || sale.Status || 'Open'; return td; })());
         
         // Remarks
-        tr.appendChild(this.ui.createParagraphCell(sale.remarks || sale.Remarks || '', 'remark-cell'));
+        tr.appendChild((ui && typeof ui.createParagraphCell === 'function') ? ui.createParagraphCell(sale.remarks || sale.Remarks || '', 'remark-cell') : (function(){ const td=document.createElement('td'); td.className='remark-cell'; td.textContent = sale.remarks || sale.Remarks || ''; return td; })());
         
         // Supervisor Comments
         const commentTd = document.createElement('td');
