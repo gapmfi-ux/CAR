@@ -39,6 +39,7 @@
                 <div class="section-title">
                     <i class="fas fa-hand-holding-usd"></i> Loan Pipeline
                     <span class="record-count" id="loanCount">0</span>
+                    <button class="add-btn" id="addLoanBtn" title="Add Loan"><i class="fas fa-plus"></i> Add</button>
                 </div>
                 <div class="table-wrap">
                     <table>
@@ -53,23 +54,6 @@
                             </tr>
                         </thead>
                         <tbody id="loanTableBody">
-                            <tr class="input-row" id="loanInputRow">
-                                <td><input type="text" id="loanType" placeholder="SME Loan" /></td>
-                                <td><input type="text" id="loanCustomer" placeholder="Full name" /></td>
-                                <td><input type="number" id="loanAmount" placeholder="0" step="0.01" /></td>
-                                <td>
-                                    <select id="loanStage">
-                                        <option value="Review">Review</option>
-                                        <option value="Approved">Approved</option>
-                                        <option value="Pending">Pending</option>
-                                        <option value="Declined">Declined</option>
-                                    </select>
-                                </td>
-                                <td><textarea id="loanRemarks" placeholder="Remarks&#10;Line 1&#10;Line 2" rows="2"></textarea></td>
-                                <td style="text-align:center;">
-                                    <button class="save-btn" id="saveLoanBtn"><i class="fas fa-check"></i> Save</button>
-                                </td>
-                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -80,6 +64,7 @@
                 <div class="section-title">
                     <i class="fas fa-hand-holding-heart"></i> Recovery Activities
                     <span class="record-count" id="recoveryCount">0</span>
+                    <button class="add-btn" id="addRecoveryBtn" title="Add Recovery"><i class="fas fa-plus"></i> Add</button>
                 </div>
                 <div class="table-wrap">
                     <table>
@@ -94,16 +79,6 @@
                             </tr>
                         </thead>
                         <tbody id="recoveryTableBody">
-                            <tr class="input-row" id="recoveryInputRow">
-                                <td><input type="text" id="recCustomer" placeholder="Customer" /></td>
-                                <td><input type="number" id="recBalance" placeholder="0.00" step="0.01" /></td>
-                                <td><input type="text" id="recLoanType" placeholder="e.g. SME" /></td>
-                                <td><input type="text" id="recLocation" placeholder="City" /></td>
-                                <td><textarea id="recAction" placeholder="Action taken&#10;e.g. called, visited" rows="2"></textarea></td>
-                                <td style="text-align:center;">
-                                    <button class="save-btn" id="saveRecoveryBtn"><i class="fas fa-check"></i> Save</button>
-                                </td>
-                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -114,6 +89,7 @@
                 <div class="section-title">
                     <i class="fas fa-chart-line"></i> Sales Activities
                     <span class="record-count" id="salesCount">0</span>
+                    <button class="add-btn" id="addSalesBtn" title="Add Sales"><i class="fas fa-plus"></i> Add</button>
                 </div>
                 <div class="table-wrap">
                     <table>
@@ -128,23 +104,6 @@
                             </tr>
                         </thead>
                         <tbody id="salesTableBody">
-                            <tr class="input-row" id="salesInputRow">
-                                <td><input type="text" id="salesLocation" placeholder="Location" /></td>
-                                <td><input type="text" id="salesDate" placeholder="DD-MMM" /></td>
-                                <td><input type="text" id="salesPurpose" placeholder="Purpose" /></td>
-                                <td>
-                                    <select id="salesStatus">
-                                        <option value="Open">Open</option>
-                                        <option value="Done">Done</option>
-                                        <option value="Pending">Pending</option>
-                                        <option value="Closed">Closed</option>
-                                    </select>
-                                </td>
-                                <td><textarea id="salesRemarks" placeholder="Remarks&#10;Line 1&#10;Line 2" rows="2"></textarea></td>
-                                <td style="text-align:center;">
-                                    <button class="save-btn" id="saveSalesBtn"><i class="fas fa-check"></i> Save</button>
-                                </td>
-                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -263,6 +222,93 @@
             <span><i class="fas fa-google"></i> Auto-save • validation enabled</span>
             <span><i class="fas fa-sync-alt"></i> Clear after save • paragraph support</span>
             <span><i class="fas fa-users"></i> <span id="viewModeLabel">Officer View</span></span>
+        </div>
+    </div>
+
+    <!-- Reusable modal for Add / Edit -->
+    <div id="recordModal" class="modal" style="display:none;">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add Record</h3>
+                <button id="modalCloseBtn" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="modalForm">
+                    <input type="hidden" id="modalRecordId" value="" />
+                    <input type="hidden" id="modalType" value="" />
+                    <input type="hidden" id="modalMode" value="create" />
+
+                    <!-- LOAN FIELDS -->
+                    <div class="modal-section" data-type="loan">
+                        <label>Product</label>
+                        <input type="text" id="loanType" placeholder="SME Loan" />
+
+                        <label>Customer</label>
+                        <input type="text" id="loanCustomer" placeholder="Full name" />
+
+                        <label>Amount</label>
+                        <input type="number" id="loanAmount" placeholder="0" step="0.01" />
+
+                        <label>Stage</label>
+                        <select id="loanStage">
+                            <option value="Review">Review</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Declined">Declined</option>
+                        </select>
+
+                        <label>Remarks</label>
+                        <textarea id="loanRemarks" rows="2" placeholder="Remarks\nLine 1"></textarea>
+                    </div>
+
+                    <!-- RECOVERY FIELDS -->
+                    <div class="modal-section" data-type="recovery" style="display:none;">
+                        <label>Customer</label>
+                        <input type="text" id="recCustomer" placeholder="Customer" />
+
+                        <label>Balance</label>
+                        <input type="number" id="recBalance" placeholder="0.00" step="0.01" />
+
+                        <label>Loan Type</label>
+                        <input type="text" id="recLoanType" placeholder="e.g. SME" />
+
+                        <label>Location</label>
+                        <input type="text" id="recLocation" placeholder="City" />
+
+                        <label>Action Taken</label>
+                        <textarea id="recAction" rows="2" placeholder="Action taken\ne.g. called, visited"></textarea>
+                    </div>
+
+                    <!-- SALES FIELDS -->
+                    <div class="modal-section" data-type="sales" style="display:none;">
+                        <label>Location</label>
+                        <input type="text" id="salesLocation" placeholder="Location" />
+
+                        <label>Date</label>
+                        <input type="text" id="salesDate" placeholder="DD-MMM" />
+
+                        <label>Purpose</label>
+                        <input type="text" id="salesPurpose" placeholder="Purpose" />
+
+                        <label>Status</label>
+                        <select id="salesStatus">
+                            <option value="Open">Open</option>
+                            <option value="Done">Done</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Closed">Closed</option>
+                        </select>
+
+                        <label>Remarks</label>
+                        <textarea id="salesRemarks" rows="2" placeholder="Remarks\nLine 1"></textarea>
+                    </div>
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="modalCancelBtn" class="btn">Cancel</button>
+                <button id="modalSaveBtn" class="btn primary">Save</button>
+            </div>
         </div>
     </div>
 
