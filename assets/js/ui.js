@@ -15,12 +15,24 @@ class UI {
 
     extractData(response) {
         if (!response) return [];
-        if (response.error) return [];
-        if (response.data && Array.isArray(response.data)) return response.data;
-        if (Array.isArray(response)) return response;
+        if (response.error) {
+            console.warn('API returned error:', response.error);
+            return [];
+        }
+        // If response has a data property that is an array
+        if (response.data && Array.isArray(response.data)) {
+            return response.data;
+        }
+        // If response itself is an array
+        if (Array.isArray(response)) {
+            return response;
+        }
+        // If response has a data property that is an object with data property
         if (response.data && response.data.data && Array.isArray(response.data.data)) {
             return response.data.data;
         }
+        // Log unexpected format
+        console.warn('Unexpected response format:', response);
         return [];
     }
 
@@ -105,6 +117,7 @@ class UI {
             return td;
         }
 
+        // Comments stored as multiple entries separated by "\n---\n"
         const parts = (text || '').split(/\n---\n/).filter(p => p.trim() !== '');
         parts.forEach(part => {
             const p = document.createElement('p');
@@ -112,27 +125,6 @@ class UI {
             td.appendChild(p);
         });
         return td;
-    }
-
-    // Check if row has new activity
-    isNewActivity(record, type) {
-        if (!record) return false;
-        if (record._hasNewActivity) return true;
-        const typeMap = { loans: 'loan', recoveries: 'recovery', sales: 'sales' };
-        const key = Object.keys(typeMap).find(k => typeMap[k] === type);
-        if (key && this.api) {
-            return this.api.hasNotification(key, record.id);
-        }
-        return false;
-    }
-
-    // ===== HELPER FUNCTIONS =====
-
-    getCurrentDate() {
-        const date = new Date();
-        const day = String(date.getDate()).padStart(2, '0');
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        return `${day}-${months[date.getMonth()]}`;
     }
 
     // ===== OFFICER VIEW - LOAN TABLE =====
@@ -159,7 +151,7 @@ class UI {
 
     createOfficerLoanRow(loan) {
         const tr = document.createElement('tr');
-        const hasNew = this.api.hasNotification('loans', loan.id) || loan._hasNewActivity;
+        const hasNew = this.api?.hasNotification('loans', loan.id) || loan._hasNewActivity || false;
         if (hasNew) tr.className = 'row-new-activity';
 
         // Product
@@ -195,8 +187,10 @@ class UI {
         updateBtn.innerHTML = '<i class="fas fa-pen"></i>';
         updateBtn.title = 'Update Record';
         updateBtn.addEventListener('click', () => {
-            // This will be handled by main.js
-            const event = new CustomEvent('updateRecord', { detail: { type: 'loan', record: loan } });
+            // Dispatch event to main app
+            const event = new CustomEvent('updateRecord', { 
+                detail: { type: 'loan', record: loan } 
+            });
             document.dispatchEvent(event);
         });
         actionTd.appendChild(updateBtn);
@@ -229,7 +223,7 @@ class UI {
 
     createOfficerRecoveryRow(recovery) {
         const tr = document.createElement('tr');
-        const hasNew = this.api.hasNotification('recoveries', recovery.id) || recovery._hasNewActivity;
+        const hasNew = this.api?.hasNotification('recoveries', recovery.id) || recovery._hasNewActivity || false;
         if (hasNew) tr.className = 'row-new-activity';
 
         // Customer
@@ -267,7 +261,9 @@ class UI {
         updateBtn.innerHTML = '<i class="fas fa-pen"></i>';
         updateBtn.title = 'Update Record';
         updateBtn.addEventListener('click', () => {
-            const event = new CustomEvent('updateRecord', { detail: { type: 'recovery', record: recovery } });
+            const event = new CustomEvent('updateRecord', { 
+                detail: { type: 'recovery', record: recovery } 
+            });
             document.dispatchEvent(event);
         });
         actionTd.appendChild(updateBtn);
@@ -300,7 +296,7 @@ class UI {
 
     createOfficerSalesRow(sale) {
         const tr = document.createElement('tr');
-        const hasNew = this.api.hasNotification('sales', sale.id) || sale._hasNewActivity;
+        const hasNew = this.api?.hasNotification('sales', sale.id) || sale._hasNewActivity || false;
         if (hasNew) tr.className = 'row-new-activity';
 
         // Location
@@ -335,7 +331,9 @@ class UI {
         updateBtn.innerHTML = '<i class="fas fa-pen"></i>';
         updateBtn.title = 'Update Record';
         updateBtn.addEventListener('click', () => {
-            const event = new CustomEvent('updateRecord', { detail: { type: 'sales', record: sale } });
+            const event = new CustomEvent('updateRecord', { 
+                detail: { type: 'sales', record: sale } 
+            });
             document.dispatchEvent(event);
         });
         actionTd.appendChild(updateBtn);
