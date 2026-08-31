@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Credit Officer Activity Report</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-    <link rel="stylesheet" href="assets/css/style.css" />
+    <link rel="stylesheet" href="styles.css" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>" />
 </head>
 <body>
@@ -19,13 +19,15 @@
             </div>
         </div>
 
-        <!-- TAB NAVIGATION -->
+        <!-- MAIN TAB NAVIGATION -->
         <div class="tab-navigation">
             <button class="tab-btn active" data-tab="officer" id="tabOfficer">
                 <i class="fas fa-user"></i> Officer View
+                <span class="badge-notify" id="officerBadge">!</span>
             </button>
             <button class="tab-btn" data-tab="supervisor" id="tabSupervisor">
                 <i class="fas fa-user-tie"></i> Supervisor View
+                <span class="badge-notify" id="supervisorBadge">!</span>
             </button>
         </div>
 
@@ -34,78 +36,109 @@
         <!-- ============================================================ -->
         <div class="tab-content active" id="officerView">
 
-            <!-- ===== LOAN PIPELINE ===== -->
-            <div class="section">
-                <div class="section-title">
+            <!-- Officer Sub-tabs -->
+            <div class="sub-tab-navigation" id="officerSubTabs">
+                <button class="sub-tab-btn active" data-subtab="loan">
                     <i class="fas fa-hand-holding-usd"></i> Loan Pipeline
-                    <span class="record-count" id="loanCount">0</span>
-                    <button class="add-btn" id="addLoanBtn" title="Add Loan"><i class="fas fa-plus"></i> Add</button>
-                </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width:14%;">Product</th>
-                                <th style="width:16%;">Customer</th>
-                                <th style="width:12%;">Amount</th>
-                                <th style="width:12%;">Stage</th>
-                                <th style="width:28%;">Remarks</th>
-                                <th style="width:10%; text-align:center;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="loanTableBody">
-                        </tbody>
-                    </table>
+                    <span class="badge-notify" id="loanSubBadge">!</span>
+                </button>
+                <button class="sub-tab-btn" data-subtab="recovery">
+                    <i class="fas fa-hand-holding-heart"></i> Recovery
+                    <span class="badge-notify" id="recoverySubBadge">!</span>
+                </button>
+                <button class="sub-tab-btn" data-subtab="sales">
+                    <i class="fas fa-chart-line"></i> Sales
+                    <span class="badge-notify" id="salesSubBadge">!</span>
+                </button>
+            </div>
+
+            <!-- Loan Pipeline -->
+            <div class="sub-tab-content active" id="subtabLoan">
+                <div class="section">
+                    <div class="section-title">
+                        <i class="fas fa-hand-holding-usd"></i> Loan Pipeline
+                        <span class="record-count" id="loanCount">0</span>
+                        <button class="add-btn" id="addLoanBtn"><i class="fas fa-plus"></i> Add</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width:10%;">Product</th>
+                                    <th style="width:12%;">Customer</th>
+                                    <th style="width:8%;">Amount</th>
+                                    <th style="width:9%;">Stage</th>
+                                    <th style="width:17%;">Remarks</th>
+                                    <th style="width:17%;">Supervisor Comments</th>
+                                    <th style="width:7%; text-align:center;">Update</th>
+                                    <th style="width:7%; text-align:center;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="loanTableBody">
+                                <!-- rendered by JS -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            <!-- ===== RECOVERY ACTIVITIES ===== -->
-            <div class="section">
-                <div class="section-title">
-                    <i class="fas fa-hand-holding-heart"></i> Recovery Activities
-                    <span class="record-count" id="recoveryCount">0</span>
-                    <button class="add-btn" id="addRecoveryBtn" title="Add Recovery"><i class="fas fa-plus"></i> Add</button>
-                </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width:16%;">Customer</th>
-                                <th style="width:12%;">Balance</th>
-                                <th style="width:14%;">Loan Type</th>
-                                <th style="width:12%;">Location</th>
-                                <th style="width:28%;">Action Taken</th>
-                                <th style="width:10%; text-align:center;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="recoveryTableBody">
-                        </tbody>
-                    </table>
+            <!-- Recovery -->
+            <div class="sub-tab-content" id="subtabRecovery" style="display:none;">
+                <div class="section">
+                    <div class="section-title">
+                        <i class="fas fa-hand-holding-heart"></i> Recovery Activities
+                        <span class="record-count" id="recoveryCount">0</span>
+                        <button class="add-btn" id="addRecoveryBtn"><i class="fas fa-plus"></i> Add</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width:11%;">Customer</th>
+                                    <th style="width:8%;">Balance</th>
+                                    <th style="width:10%;">Loan Type</th>
+                                    <th style="width:8%;">Location</th>
+                                    <th style="width:16%;">Action Taken</th>
+                                    <th style="width:17%;">Supervisor Comments</th>
+                                    <th style="width:7%; text-align:center;">Update</th>
+                                    <th style="width:7%; text-align:center;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recoveryTableBody">
+                                <!-- rendered by JS -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            <!-- ===== SALES ACTIVITIES ===== -->
-            <div class="section">
-                <div class="section-title">
-                    <i class="fas fa-chart-line"></i> Sales Activities
-                    <span class="record-count" id="salesCount">0</span>
-                    <button class="add-btn" id="addSalesBtn" title="Add Sales"><i class="fas fa-plus"></i> Add</button>
-                </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width:14%;">Location</th>
-                                <th style="width:10%;">Date</th>
-                                <th style="width:18%;">Purpose</th>
-                                <th style="width:12%;">Status</th>
-                                <th style="width:28%;">Remarks</th>
-                                <th style="width:10%; text-align:center;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="salesTableBody">
-                        </tbody>
-                    </table>
+            <!-- Sales -->
+            <div class="sub-tab-content" id="subtabSales" style="display:none;">
+                <div class="section">
+                    <div class="section-title">
+                        <i class="fas fa-chart-line"></i> Sales Activities
+                        <span class="record-count" id="salesCount">0</span>
+                        <button class="add-btn" id="addSalesBtn"><i class="fas fa-plus"></i> Add</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width:10%;">Location</th>
+                                    <th style="width:8%;">Date</th>
+                                    <th style="width:13%;">Purpose</th>
+                                    <th style="width:8%;">Status</th>
+                                    <th style="width:16%;">Remarks</th>
+                                    <th style="width:17%;">Supervisor Comments</th>
+                                    <th style="width:7%; text-align:center;">Update</th>
+                                    <th style="width:7%; text-align:center;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="salesTableBody">
+                                <!-- rendered by JS -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -114,96 +147,30 @@
         <!-- SUPERVISOR VIEW -->
         <!-- ============================================================ -->
         <div class="tab-content" id="supervisorView">
-
-            <!-- ===== LOAN PIPELINE - SUPERVISOR ===== -->
             <div class="section">
-                <div class="section-title">
-                    <i class="fas fa-hand-holding-usd"></i> Loan Pipeline
-                    <span class="record-count" id="supervisorLoanCount">0</span>
-                </div>
+                <div class="section-title"><i class="fas fa-hand-holding-usd"></i> Loan Pipeline <span class="record-count" id="supervisorLoanCount">0</span></div>
                 <div class="table-wrap">
                     <table>
-                        <thead>
-                            <tr>
-                                <th style="width:12%;">Officer</th>
-                                <th style="width:12%;">Product</th>
-                                <th style="width:14%;">Customer</th>
-                                <th style="width:10%;">Amount</th>
-                                <th style="width:10%;">Stage</th>
-                                <th style="width:20%;">Remarks</th>
-                                <th style="width:16%;">Supervisor Comments</th>
-                                <th style="width:8%; text-align:center;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="supervisorLoanTableBody">
-                            <tr id="supervisorLoanEmpty">
-                                <td colspan="8" class="empty-state">
-                                    <i class="fas fa-inbox"></i> No loan records found
-                                </td>
-                            </tr>
-                        </tbody>
+                        <thead><tr><th>Officer</th><th>Product</th><th>Customer</th><th>Amount</th><th>Stage</th><th>Remarks</th><th>Supervisor Comments</th><th style="text-align:center;">Action</th></tr></thead>
+                        <tbody id="supervisorLoanTableBody"><tr><td colspan="8" class="empty-state"><i class="fas fa-inbox"></i> No loan records</td></tr></tbody>
                     </table>
                 </div>
             </div>
-
-            <!-- ===== RECOVERY ACTIVITIES - SUPERVISOR ===== -->
             <div class="section">
-                <div class="section-title">
-                    <i class="fas fa-hand-holding-heart"></i> Recovery Activities
-                    <span class="record-count" id="supervisorRecoveryCount">0</span>
-                </div>
+                <div class="section-title"><i class="fas fa-hand-holding-heart"></i> Recovery Activities <span class="record-count" id="supervisorRecoveryCount">0</span></div>
                 <div class="table-wrap">
                     <table>
-                        <thead>
-                            <tr>
-                                <th style="width:12%;">Officer</th>
-                                <th style="width:14%;">Customer</th>
-                                <th style="width:10%;">Balance</th>
-                                <th style="width:12%;">Loan Type</th>
-                                <th style="width:10%;">Location</th>
-                                <th style="width:18%;">Action Taken</th>
-                                <th style="width:16%;">Supervisor Comments</th>
-                                <th style="width:8%; text-align:center;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="supervisorRecoveryTableBody">
-                            <tr id="supervisorRecoveryEmpty">
-                                <td colspan="8" class="empty-state">
-                                    <i class="fas fa-inbox"></i> No recovery records found
-                                </td>
-                            </tr>
-                        </tbody>
+                        <thead><tr><th>Officer</th><th>Customer</th><th>Balance</th><th>Loan Type</th><th>Location</th><th>Action Taken</th><th>Supervisor Comments</th><th style="text-align:center;">Action</th></tr></thead>
+                        <tbody id="supervisorRecoveryTableBody"><tr><td colspan="8" class="empty-state"><i class="fas fa-inbox"></i> No recovery records</td></tr></tbody>
                     </table>
                 </div>
             </div>
-
-            <!-- ===== SALES ACTIVITIES - SUPERVISOR ===== -->
             <div class="section">
-                <div class="section-title">
-                    <i class="fas fa-chart-line"></i> Sales Activities
-                    <span class="record-count" id="supervisorSalesCount">0</span>
-                </div>
+                <div class="section-title"><i class="fas fa-chart-line"></i> Sales Activities <span class="record-count" id="supervisorSalesCount">0</span></div>
                 <div class="table-wrap">
                     <table>
-                        <thead>
-                            <tr>
-                                <th style="width:12%;">Officer</th>
-                                <th style="width:12%;">Location</th>
-                                <th style="width:10%;">Date</th>
-                                <th style="width:16%;">Purpose</th>
-                                <th style="width:10%;">Status</th>
-                                <th style="width:18%;">Remarks</th>
-                                <th style="width:16%;">Supervisor Comments</th>
-                                <th style="width:8%; text-align:center;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="supervisorSalesTableBody">
-                            <tr id="supervisorSalesEmpty">
-                                <td colspan="8" class="empty-state">
-                                    <i class="fas fa-inbox"></i> No sales records found
-                                </td>
-                            </tr>
-                        </tbody>
+                        <thead><tr><th>Officer</th><th>Location</th><th>Date</th><th>Purpose</th><th>Status</th><th>Remarks</th><th>Supervisor Comments</th><th style="text-align:center;">Action</th></tr></thead>
+                        <tbody id="supervisorSalesTableBody"><tr><td colspan="8" class="empty-state"><i class="fas fa-inbox"></i> No sales records</td></tr></tbody>
                     </table>
                 </div>
             </div>
@@ -211,110 +178,23 @@
 
         <!-- TOAST -->
         <div class="flex-end mt-2">
-            <div id="statusMessage" class="toast" style="display: none; background: #222;">
-                <i class="fas fa-check-circle" style="margin-right: 6px;"></i>
-                <span id="statusText">Record saved successfully</span>
+            <div id="statusMessage" class="toast" style="display:none; background:#222;">
+                <i class="fas fa-check-circle" style="margin-right:6px;"></i>
+                <span id="statusText">Saved</span>
             </div>
         </div>
 
-        <!-- FOOTER -->
         <div class="footer">
-            <span><i class="fas fa-google"></i> Auto-save • validation enabled</span>
-            <span><i class="fas fa-sync-alt"></i> Clear after save • paragraph support</span>
+            <span><i class="fas fa-google"></i> Auto-save • validation</span>
+            <span><i class="fas fa-sync-alt"></i> Modal forms • history</span>
             <span><i class="fas fa-users"></i> <span id="viewModeLabel">Officer View</span></span>
         </div>
     </div>
 
-    <!-- Reusable modal for Add / Edit -->
-    <div id="recordModal" class="modal" style="display:none;">
-        <div class="modal-backdrop"></div>
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalTitle">Add Record</h3>
-                <button id="modalCloseBtn" class="modal-close">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="modalForm">
-                    <input type="hidden" id="modalRecordId" value="" />
-                    <input type="hidden" id="modalType" value="" />
-                    <input type="hidden" id="modalMode" value="create" />
-
-                    <!-- LOAN FIELDS -->
-                    <div class="modal-section" data-type="loan">
-                        <label>Product</label>
-                        <input type="text" id="loanType" placeholder="SME Loan" />
-
-                        <label>Customer</label>
-                        <input type="text" id="loanCustomer" placeholder="Full name" />
-
-                        <label>Amount</label>
-                        <input type="number" id="loanAmount" placeholder="0" step="0.01" />
-
-                        <label>Stage</label>
-                        <select id="loanStage">
-                            <option value="Review">Review</option>
-                            <option value="Approved">Approved</option>
-                            <option value="Pending">Pending</option>
-                            <option value="Declined">Declined</option>
-                        </select>
-
-                        <label>Remarks</label>
-                        <textarea id="loanRemarks" rows="2" placeholder="Remarks\nLine 1"></textarea>
-                    </div>
-
-                    <!-- RECOVERY FIELDS -->
-                    <div class="modal-section" data-type="recovery" style="display:none;">
-                        <label>Customer</label>
-                        <input type="text" id="recCustomer" placeholder="Customer" />
-
-                        <label>Balance</label>
-                        <input type="number" id="recBalance" placeholder="0.00" step="0.01" />
-
-                        <label>Loan Type</label>
-                        <input type="text" id="recLoanType" placeholder="e.g. SME" />
-
-                        <label>Location</label>
-                        <input type="text" id="recLocation" placeholder="City" />
-
-                        <label>Action Taken</label>
-                        <textarea id="recAction" rows="2" placeholder="Action taken\ne.g. called, visited"></textarea>
-                    </div>
-
-                    <!-- SALES FIELDS -->
-                    <div class="modal-section" data-type="sales" style="display:none;">
-                        <label>Location</label>
-                        <input type="text" id="salesLocation" placeholder="Location" />
-
-                        <label>Date</label>
-                        <input type="text" id="salesDate" placeholder="DD-MMM" />
-
-                        <label>Purpose</label>
-                        <input type="text" id="salesPurpose" placeholder="Purpose" />
-
-                        <label>Status</label>
-                        <select id="salesStatus">
-                            <option value="Open">Open</option>
-                            <option value="Done">Done</option>
-                            <option value="Pending">Pending</option>
-                            <option value="Closed">Closed</option>
-                        </select>
-
-                        <label>Remarks</label>
-                        <textarea id="salesRemarks" rows="2" placeholder="Remarks\nLine 1"></textarea>
-                    </div>
-
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button id="modalCancelBtn" class="btn">Cancel</button>
-                <button id="modalSaveBtn" class="btn primary">Save</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="assets/js/api.js"></script>
-    <script src="assets/js/ui.js"></script>
-    <script src="assets/js/supervisor.js"></script>
-    <script src="assets/js/main.js"></script>
+    <script src="config.js"></script>
+    <script src="api.js"></script>
+    <script src="ui.js"></script>
+    <script src="supervisor.js"></script>
+    <script src="main.js"></script>
 </body>
 </html>
