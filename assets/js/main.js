@@ -15,43 +15,7 @@ class CreditOfficerApp {
 
         this.setUserName('Credit Officer');
 
-        // Load mock data for demo
-        this.loadMockData();
-
         this.init();
-    }
-
-    // ===== MOCK DATA =====
-
-    loadMockData() {
-        this.api._store.loans = [
-            { id: 'l1', product: 'SME Loan', customer: 'John Doe', amount: 25000, stage: 'Approved', remarks: 'First draw done', supervisor: 'Looks good. Approved.',
-              history: [{ type: 'officer', content: 'First draw done', timestamp: '2026-08-31T10:00:00Z' }],
-              supervisorHistory: [{ content: 'Looks good. Approved.', timestamp: '2026-08-31T10:30:00Z' }] },
-            { id: 'l2', product: 'Agri Loan', customer: 'Jane Smith', amount: 12000, stage: 'Review', remarks: 'Pending docs', supervisor: 'Need KYC update.',
-              history: [{ type: 'officer', content: 'Pending docs', timestamp: '2026-08-30T14:00:00Z' }],
-              supervisorHistory: [{ content: 'Need KYC update.', timestamp: '2026-08-31T09:00:00Z' }] },
-        ];
-        this.api._store.recoveries = [
-            { id: 'r1', customer: 'ABC Ltd', balance: 5400, loanType: 'SME', location: 'Nairobi', actionTaken: 'Called client', supervisor: 'Follow up next week.',
-              history: [{ type: 'officer', content: 'Called client', timestamp: '2026-08-30T11:00:00Z' }],
-              supervisorHistory: [{ content: 'Follow up next week.', timestamp: '2026-08-30T15:00:00Z' }] },
-            { id: 'r2', customer: 'XYZ Traders', balance: 2200, loanType: 'Micro', location: 'Kisumu', actionTaken: 'Visited premises', supervisor: 'Payment plan agreed.',
-              history: [{ type: 'officer', content: 'Visited premises', timestamp: '2026-08-29T09:00:00Z' }],
-              supervisorHistory: [{ content: 'Payment plan agreed.', timestamp: '2026-08-29T16:00:00Z' }] },
-        ];
-        this.api._store.sales = [
-            { id: 's1', location: 'Mombasa', date: '10-Mar', purpose: 'New account', status: 'Done', remarks: 'Opened 3 new accounts', supervisor: 'Good work.',
-              history: [{ type: 'officer', content: 'Opened 3 new accounts', timestamp: '2026-08-28T13:00:00Z' }],
-              supervisorHistory: [{ content: 'Good work.', timestamp: '2026-08-28T14:00:00Z' }] },
-            { id: 's2', location: 'Eldoret', date: '12-Mar', purpose: 'Cross-sell', status: 'Pending', remarks: 'Follow up next week', supervisor: 'Pending approval.',
-              history: [{ type: 'officer', content: 'Follow up next week', timestamp: '2026-08-29T10:00:00Z' }],
-              supervisorHistory: [{ content: 'Pending approval.', timestamp: '2026-08-29T12:00:00Z' }] },
-        ];
-
-        // Mark some as new activity for demo
-        this.api.markNotified('loans', 'l1');
-        this.api.markNotified('recoveries', 'r1');
     }
 
     // ===== USER =====
@@ -79,9 +43,11 @@ class CreditOfficerApp {
             this.setupSubTabs();
             this.setupEventListeners();
 
+            // Test connection first
             await this.testConnection();
-            this.renderAll();
-            this.updateBadges();
+            
+            // Load data from the sheet
+            await this.loadAllData();
 
             this.ui.showToast('✅ Data loaded successfully', false, 2000);
 
@@ -98,16 +64,59 @@ class CreditOfficerApp {
         try {
             const result = await this.api.testConnection();
             if (!result.connected) {
-                this.ui.showToast('⚠️ ' + result.message, true, 3000);
+                this.ui.showToast('⚠️ ' + result.message + ' - Using mock data', true, 3000);
+                // Fallback to mock data if API is not available
+                this.api._useMockData = true;
+                this.loadMockData();
             } else {
                 console.log('✅ Connection successful');
+                // Use real API
+                this.api._useMockData = false;
             }
             return result;
         } catch (error) {
             console.error('Connection test failed:', error);
-            this.ui.showToast('⚠️ Cannot connect to server: ' + error.message, true, 5000);
+            this.ui.showToast('⚠️ Cannot connect to server - Using mock data', true, 5000);
+            this.api._useMockData = true;
+            this.loadMockData();
             return { connected: false, message: error.message };
         }
+    }
+
+    // ===== MOCK DATA (for development/fallback) =====
+
+    loadMockData() {
+        // Only load mock data if store is empty
+        if (this.api._store.loans.length === 0) {
+            this.api._store.loans = [
+                { id: 'l1', product: 'SME Loan', customer: 'John Doe', amount: 25000, stage: 'Approved', remarks: 'First draw done', supervisor: 'Looks good. Approved.',
+                  history: [{ type: 'officer', content: 'First draw done', timestamp: '2026-08-31T10:00:00Z' }],
+                  supervisorHistory: [{ content: 'Looks good. Approved.', timestamp: '2026-08-31T10:30:00Z' }] },
+                { id: 'l2', product: 'Agri Loan', customer: 'Jane Smith', amount: 12000, stage: 'Review', remarks: 'Pending docs', supervisor: 'Need KYC update.',
+                  history: [{ type: 'officer', content: 'Pending docs', timestamp: '2026-08-30T14:00:00Z' }],
+                  supervisorHistory: [{ content: 'Need KYC update.', timestamp: '2026-08-31T09:00:00Z' }] },
+            ];
+            this.api._store.recoveries = [
+                { id: 'r1', customer: 'ABC Ltd', balance: 5400, loanType: 'SME', location: 'Nairobi', actionTaken: 'Called client', supervisor: 'Follow up next week.',
+                  history: [{ type: 'officer', content: 'Called client', timestamp: '2026-08-30T11:00:00Z' }],
+                  supervisorHistory: [{ content: 'Follow up next week.', timestamp: '2026-08-30T15:00:00Z' }] },
+                { id: 'r2', customer: 'XYZ Traders', balance: 2200, loanType: 'Micro', location: 'Kisumu', actionTaken: 'Visited premises', supervisor: 'Payment plan agreed.',
+                  history: [{ type: 'officer', content: 'Visited premises', timestamp: '2026-08-29T09:00:00Z' }],
+                  supervisorHistory: [{ content: 'Payment plan agreed.', timestamp: '2026-08-29T16:00:00Z' }] },
+            ];
+            this.api._store.sales = [
+                { id: 's1', location: 'Mombasa', date: '10-Mar', purpose: 'New account', status: 'Done', remarks: 'Opened 3 new accounts', supervisor: 'Good work.',
+                  history: [{ type: 'officer', content: 'Opened 3 new accounts', timestamp: '2026-08-28T13:00:00Z' }],
+                  supervisorHistory: [{ content: 'Good work.', timestamp: '2026-08-28T14:00:00Z' }] },
+                { id: 's2', location: 'Eldoret', date: '12-Mar', purpose: 'Cross-sell', status: 'Pending', remarks: 'Follow up next week', supervisor: 'Pending approval.',
+                  history: [{ type: 'officer', content: 'Follow up next week', timestamp: '2026-08-29T10:00:00Z' }],
+                  supervisorHistory: [{ content: 'Pending approval.', timestamp: '2026-08-29T12:00:00Z' }] },
+            ];
+        }
+
+        // Mark some as new activity for demo
+        this.api.markNotified('loans', 'l1');
+        this.api.markNotified('recoveries', 'r1');
     }
 
     // ===== TABS =====
@@ -357,13 +366,13 @@ class CreditOfficerApp {
                         this.api.clearNotification(type + 's', record.id);
                     }
                     closeModal();
-                    this.renderAll();
+                    await this.loadAllData(); // Refresh data from sheet
                     if (this.currentMainTab === 'supervisor' && this.supervisor) {
                         this.supervisor.refreshAll();
                     }
                     this.updateBadges();
                 } else {
-                    this.ui.showToast('❌ Operation failed', true, 2000);
+                    this.ui.showToast('❌ Operation failed: ' + (result?.error || 'Unknown error'), true, 2000);
                 }
             } catch (err) {
                 this.ui.showToast('❌ Error: ' + err.message, true, 2500);
@@ -402,12 +411,74 @@ class CreditOfficerApp {
         return null;
     }
 
+    // ===== LOAD DATA FROM SHEET =====
+
+    async loadAllData() {
+        if (this.isLoading) return;
+        this.isLoading = true;
+        this.ui.showToast('⏳ Loading data...', false, 0);
+
+        try {
+            const results = await this.api.batchRequest({
+                loans: { action: '/loan/list', data: {} },
+                recoveries: { action: '/recovery/list', data: {} },
+                sales: { action: '/sales/list', data: {} }
+            });
+
+            // Extract data from responses
+            let loans = this.ui.extractData(results.loans);
+            let recoveries = this.ui.extractData(results.recoveries);
+            let sales = this.ui.extractData(results.sales);
+
+            // If using mock data, use the store
+            if (this.api._useMockData) {
+                loans = this.api._store.loans || [];
+                recoveries = this.api._store.recoveries || [];
+                sales = this.api._store.sales || [];
+            }
+
+            console.log('Loaded data:', { 
+                loansCount: loans.length, 
+                recoveriesCount: recoveries.length, 
+                salesCount: sales.length 
+            });
+
+            // Update the UI
+            this.ui.renderLoanTable(loans);
+            this.ui.renderRecoveryTable(recoveries);
+            this.ui.renderSalesTable(sales);
+
+            // Update supervisor view
+            if (this.supervisor) {
+                this.supervisor.renderLoanTable(loans);
+                this.supervisor.renderRecoveryTable(recoveries);
+                this.supervisor.renderSalesTable(sales);
+            }
+
+            this.ui.showToast('✅ Data loaded: ' + loans.length + ' loans, ' + recoveries.length + ' recoveries, ' + sales.length + ' sales', false, 2000);
+
+        } catch (error) {
+            console.error('Error loading data:', error);
+            this.ui.showToast('❌ Failed to load data: ' + error.message, true, 5000);
+            
+            // Fallback to mock data
+            if (!this.api._useMockData) {
+                this.api._useMockData = true;
+                this.loadMockData();
+                this.renderAll();
+            }
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
     // ===== RENDER ALL =====
 
     renderAll() {
-        const loans = this.api._store.loans || [];
-        const recoveries = this.api._store.recoveries || [];
-        const sales = this.api._store.sales || [];
+        // Use the store data
+        const loans = this.api._useMockData ? this.api._store.loans || [] : [];
+        const recoveries = this.api._useMockData ? this.api._store.recoveries || [] : [];
+        const sales = this.api._useMockData ? this.api._store.sales || [] : [];
 
         this.ui.renderLoanTable(loans);
         this.ui.renderRecoveryTable(recoveries);
@@ -420,31 +491,6 @@ class CreditOfficerApp {
     async refreshData() {
         await this.loadAllData();
         this.ui.showToast('🔄 Data refreshed', false, 2000);
-    }
-
-    async loadAllData() {
-        if (this.isLoading) return;
-        this.isLoading = true;
-
-        try {
-            const results = await this.api.batchRequest({
-                loans: { action: '/loan/list', data: {} },
-                recoveries: { action: '/recovery/list', data: {} },
-                sales: { action: '/sales/list', data: {} }
-            });
-
-            const loans = this.ui.extractData(results.loans);
-            const recoveries = this.ui.extractData(results.recoveries);
-            const sales = this.ui.extractData(results.sales);
-
-            this.renderAll();
-
-        } catch (error) {
-            console.error('Error loading data:', error);
-            this.ui.showToast('❌ Failed to load data: ' + error.message, true, 5000);
-        } finally {
-            this.isLoading = false;
-        }
     }
 }
 
