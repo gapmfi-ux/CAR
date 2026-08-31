@@ -8,11 +8,15 @@ class ApiService {
         // UPDATE THIS with your Google Apps Script Web App URL
         this.BASE_URL = 'https://script.google.com/macros/s/AKfycby9kpq1umFLzGJTqm4nOsFt46HmiJvTqvs6wyXjQFOinCqT9CG_0QBAYekb2UgtXg8sQg/exec';
         this.cache = new Map();
-        this.cacheTimeout = 5 * 60 * 1000; // 5 minutes cache
+        this.cacheTimeout = 5 * 60 * 1000;
         this.pendingRequests = new Map();
-        this.debug = false; // Set to true for debugging
-        this.requestTimeout = 30000; // 30 seconds
-        this.userName = 'Credit Officer'; // Default user name
+        this.debug = false;
+        this.requestTimeout = 30000;
+        this.userName = 'Credit Officer';
+
+        // In-memory store for mock data
+        this._store = { loans: [], recoveries: [], sales: [] };
+        this._notificationStore = { loans: new Set(), recoveries: new Set(), sales: new Set() };
     }
 
     log(...args) {
@@ -25,32 +29,52 @@ class ApiService {
         console.error('[API]', ...args);
     }
 
-    /**
-     * Set the user name for the session
-     * @param {string} name - User name
-     */
     setUser(name) {
         this.userName = name || 'Credit Officer';
         console.log('👤 User set to:', this.userName);
     }
 
-    /**
-     * Get the current user name
-     * @returns {string} - Current user name
-     */
     getUser() {
         return this.userName;
     }
 
-    /**
-     * Generic request method using JSONP (script tag)
-     * This bypasses CORS entirely
-     */
+    // ===== NOTIFICATION TRACKING =====
+    hasNotification(type, id) {
+        return this._notificationStore[type]?.has(id) || false;
+    }
+
+    clearNotification(type, id) {
+        if (this._notificationStore[type]) {
+            this._notificationStore[type].delete(id);
+        }
+    }
+
+    clearAllNotifications(type) {
+        if (this._notificationStore[type]) {
+            this._notificationStore[type].clear();
+        }
+    }
+
+    markNotified(type, id) {
+        if (!this._notificationStore[type]) this._notificationStore[type] = new Set();
+        this._notificationStore[type].add(id);
+    }
+
+    hasAnyNotifications(type) {
+        if (!this._notificationStore[type]) return false;
+        return this._notificationStore[type].size > 0;
+    }
+
+    getNotificationCount(type) {
+        if (!this._notificationStore[type]) return 0;
+        return this._notificationStore[type].size;
+    }
+
+    // ===== GENERIC REQUEST =====
     async request(action, data = {}, options = {}) {
         const cacheKey = `${action}_${JSON.stringify(data)}`;
         const useCache = options.useCache !== false;
-        
-        // Check cache first
+
         if (useCache && this.cache.has(cacheKey)) {
             const cached = this.cache.get(cacheKey);
             if (Date.now() - cached.timestamp < this.cacheTimeout) {
@@ -61,28 +85,22 @@ class ApiService {
             }
         }
 
-        // Deduplicate concurrent requests
         if (this.pendingRequests.has(cacheKey)) {
             this.log(`Deduplicating request for ${action}`);
             return this.pendingRequests.get(cacheKey);
         }
 
-        // Create the request promise
         const requestPromise = new Promise((resolve, reject) => {
             try {
-                // Generate a unique callback name
                 const callbackName = 'api_callback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                
-                // Build the URL with parameters
                 const url = new URL(this.BASE_URL);
                 url.searchParams.append('action', action);
                 url.searchParams.append('data', JSON.stringify(data));
                 url.searchParams.append('callback', callbackName);
-                
+
                 const fullUrl = url.toString();
                 this.log(`Requesting: ${action}`, 'Data:', data);
-                
-                // Set timeout
+
                 const timeoutId = setTimeout(() => {
                     if (window[callbackName]) {
                         delete window[callbackName];
@@ -90,20 +108,16 @@ class ApiService {
                         reject(new Error('Request timeout after 30 seconds'));
                     }
                 }, this.requestTimeout);
-                
-                // Create the callback function
+
                 window[callbackName] = (response) => {
                     clearTimeout(timeoutId);
                     delete window[callbackName];
-                    
                     if (script.parentNode) {
                         script.parentNode.removeChild(script);
                     }
-                    
                     this.log(`Response for ${action}:`, response);
-                    
+
                     if (response && response.success !== false) {
-                        // Cache the response
                         this.cache.set(cacheKey, {
                             data: response,
                             timestamp: Date.now()
@@ -115,8 +129,7 @@ class ApiService {
                         reject(new Error(errorMsg));
                     }
                 };
-                
-                // Create and add the script tag
+
                 const script = document.createElement('script');
                 script.src = fullUrl;
                 script.onerror = (error) => {
@@ -126,19 +139,15 @@ class ApiService {
                     this.error(`Script error for ${action}`, error);
                     reject(new Error('Network error - failed to connect to server'));
                 };
-                
                 document.head.appendChild(script);
-                this.log(`Script tag added for ${action}`);
-                
+
             } catch (error) {
                 this.error(`Request error for ${action}:`, error);
                 reject(error);
             }
         });
 
-        // Store the pending request
         this.pendingRequests.set(cacheKey, requestPromise);
-        
         try {
             const result = await requestPromise;
             return result;
@@ -147,31 +156,25 @@ class ApiService {
         }
     }
 
-    /**
-     * Batch load multiple requests
-     */
     async batchRequest(requests) {
         const results = {};
         const promises = [];
-        
+
         for (const [key, { action, data }] of Object.entries(requests)) {
             promises.push(
                 this.request(action, data, { useCache: true })
                     .then(result => { results[key] = result; })
-                    .catch(err => { 
+                    .catch(err => {
                         results[key] = { error: err.message };
                         this.error(`Batch request failed for ${key}:`, err.message);
                     })
             );
         }
-        
+
         await Promise.all(promises);
         return results;
     }
 
-    /**
-     * Clear cache for specific action or all
-     */
     clearCache(action = null) {
         if (action) {
             const keysToDelete = [];
@@ -188,19 +191,15 @@ class ApiService {
         }
     }
 
-    // ============================================
-    // CREDIT OFFICER ACTIVITY REPORT API
-    // ============================================
-
-    // ===== LOAN =====
-    async createLoan(data, options = {}) {
-        this.log('createLoan called with:', data);
-        return this.request('/loan/create', data, options);
-    }
-
+    // ===== LOAN CRUD =====
     async getLoans(options = {}) {
         this.log('getLoans called');
         return this.request('/loan/list', {}, options);
+    }
+
+    async createLoan(data, options = {}) {
+        this.log('createLoan called with:', data);
+        return this.request('/loan/create', data, options);
     }
 
     async updateLoan(id, data, options = {}) {
@@ -213,15 +212,15 @@ class ApiService {
         return this.request('/loan/delete', { id }, options);
     }
 
-    // ===== RECOVERY =====
-    async createRecovery(data, options = {}) {
-        this.log('createRecovery called with:', data);
-        return this.request('/recovery/create', data, options);
-    }
-
+    // ===== RECOVERY CRUD =====
     async getRecoveries(options = {}) {
         this.log('getRecoveries called');
         return this.request('/recovery/list', {}, options);
+    }
+
+    async createRecovery(data, options = {}) {
+        this.log('createRecovery called with:', data);
+        return this.request('/recovery/create', data, options);
     }
 
     async updateRecovery(id, data, options = {}) {
@@ -234,15 +233,15 @@ class ApiService {
         return this.request('/recovery/delete', { id }, options);
     }
 
-    // ===== SALES =====
-    async createSales(data, options = {}) {
-        this.log('createSales called with:', data);
-        return this.request('/sales/create', data, options);
-    }
-
+    // ===== SALES CRUD =====
     async getSales(options = {}) {
         this.log('getSales called');
         return this.request('/sales/list', {}, options);
+    }
+
+    async createSales(data, options = {}) {
+        this.log('createSales called with:', data);
+        return this.request('/sales/create', data, options);
     }
 
     async updateSales(id, data, options = {}) {
@@ -284,37 +283,7 @@ class ApiService {
 
 // Create global API instance
 window.API = new ApiService();
-window.api = window.API; // Alias for backward compatibility
-
-// For backward compatibility with existing code
-window.callGAS = async function(action, data = {}) {
-    console.warn('callGAS is deprecated. Use API.[method] instead.');
-    
-    const actionMap = {
-        // Loan
-        '/loan/create': () => API.createLoan(data),
-        '/loan/list': () => API.getLoans(),
-        '/loan/update': () => API.updateLoan(data.id, data.data),
-        '/loan/delete': () => API.deleteLoan(data.id),
-        // Recovery
-        '/recovery/create': () => API.createRecovery(data),
-        '/recovery/list': () => API.getRecoveries(),
-        '/recovery/update': () => API.updateRecovery(data.id, data.data),
-        '/recovery/delete': () => API.deleteRecovery(data.id),
-        // Sales
-        '/sales/create': () => API.createSales(data),
-        '/sales/list': () => API.getSales(),
-        '/sales/update': () => API.updateSales(data.id, data.data),
-        '/sales/delete': () => API.deleteSales(data.id),
-    };
-    
-    const apiCall = actionMap[action];
-    if (apiCall) {
-        return apiCall();
-    }
-    
-    throw new Error(`Unknown action: ${action}`);
-};
+window.api = window.API;
 
 console.log('✅ API Service initialized with JSONP approach');
 console.log('📍 API URL:', window.API.BASE_URL);
