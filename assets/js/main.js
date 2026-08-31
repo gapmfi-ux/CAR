@@ -88,9 +88,6 @@ class CreditOfficerApp {
             console.log('✅ Credit Officer Activity Report initialized');
             console.log('👤 User:', this.getUserName());
 
-            // Attach supervisor comment button events
-            this.attachSupervisorEvents();
-
         } catch (error) {
             console.error('Initialization error:', error);
             this.ui.showToast('❌ Failed to initialize: ' + error.message, true, 5000);
@@ -182,24 +179,21 @@ class CreditOfficerApp {
     // ===== EVENT LISTENERS =====
 
     setupEventListeners() {
+        // Add buttons
         document.getElementById('addLoanBtn').addEventListener('click', () => this.openModal('loan'));
         document.getElementById('addRecoveryBtn').addEventListener('click', () => this.openModal('recovery'));
         document.getElementById('addSalesBtn').addEventListener('click', () => this.openModal('sales'));
-    }
 
-    attachSupervisorEvents() {
-        document.querySelectorAll('#supervisorView .comment-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = btn.dataset.id;
-                const type = btn.dataset.type;
-                const record = this.api._store[type + 's'].find(r => r.id === id);
-                if (record) {
-                    this.api.clearNotification(type + 's', id);
-                    this.updateBadges();
-                    this.renderAll();
-                    this.openModal(type, record);
-                }
-            });
+        // Update record events from UI
+        document.addEventListener('updateRecord', (e) => {
+            const { type, record } = e.detail;
+            this.openModal(type, record);
+        });
+
+        // Supervisor comment events
+        document.addEventListener('supervisorComment', (e) => {
+            const { type, record } = e.detail;
+            this.openModal(type, record);
         });
     }
 
@@ -210,6 +204,7 @@ class CreditOfficerApp {
         const isEdit = !!record;
         const title = isEdit ? `Update ${type.charAt(0).toUpperCase() + type.slice(1)}` :
             `Add New ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+        const isSupervisor = this.currentMainTab === 'supervisor';
 
         // Build history section
         let historyHtml = '';
@@ -247,7 +242,17 @@ class CreditOfficerApp {
             }
         }
 
-        // Build form fields
+        // Build form fields - Supervisor Comment field ONLY in Supervisor View
+        let supervisorField = '';
+        if (isSupervisor) {
+            supervisorField = `
+                <div class="modal-field">
+                    <label>Supervisor Comment</label>
+                    <textarea id="modalSupervisor" rows="2" placeholder="Add supervisor comment...">${record?.supervisor || ''}</textarea>
+                </div>
+            `;
+        }
+
         let fields = '';
         if (type === 'loan') {
             fields = `
@@ -263,7 +268,7 @@ class CreditOfficerApp {
                     </select>
                 </div>
                 <div class="modal-field"><label>Remarks</label><textarea id="modalRemarks" rows="2">${record?.remarks || ''}</textarea></div>
-                <div class="modal-field"><label>Supervisor Comment</label><textarea id="modalSupervisor" rows="2" placeholder="Add supervisor comment...">${record?.supervisor || ''}</textarea></div>
+                ${supervisorField}
             `;
         } else if (type === 'recovery') {
             fields = `
@@ -272,7 +277,7 @@ class CreditOfficerApp {
                 <div class="modal-field"><label>Loan Type</label><input id="modalLoanType" value="${record?.loanType || ''}" placeholder="SME" /></div>
                 <div class="modal-field"><label>Location</label><input id="modalLocation" value="${record?.location || ''}" placeholder="City" /></div>
                 <div class="modal-field"><label>Action Taken</label><textarea id="modalAction" rows="2">${record?.actionTaken || ''}</textarea></div>
-                <div class="modal-field"><label>Supervisor Comment</label><textarea id="modalSupervisor" rows="2" placeholder="Add supervisor comment...">${record?.supervisor || ''}</textarea></div>
+                ${supervisorField}
             `;
         } else if (type === 'sales') {
             fields = `
@@ -288,7 +293,7 @@ class CreditOfficerApp {
                     </select>
                 </div>
                 <div class="modal-field"><label>Remarks</label><textarea id="modalRemarks" rows="2">${record?.remarks || ''}</textarea></div>
-                <div class="modal-field"><label>Supervisor Comment</label><textarea id="modalSupervisor" rows="2" placeholder="Add supervisor comment...">${record?.supervisor || ''}</textarea></div>
+                ${supervisorField}
             `;
         }
 
@@ -328,7 +333,7 @@ class CreditOfficerApp {
 
         overlay.querySelector('#modalForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const data = this.collectModalData(type, overlay);
+            const data = this.collectModalData(type, overlay, isSupervisor);
             if (!data) {
                 this.ui.showToast('❌ Please fill required fields', true, 2000);
                 return;
@@ -366,230 +371,48 @@ class CreditOfficerApp {
         });
     }
 
-    collectModalData(type, overlay) {
+    collectModalData(type, overlay, isSupervisor) {
         const get = (id) => overlay.querySelector(id)?.value || '';
-        const supervisor = get('#modalSupervisor').trim();
+        const supervisor = isSupervisor ? get('#modalSupervisor').trim() : '';
 
         if (type === 'loan') {
             const product = get('#modalProduct').trim();
             const customer = get('#modalCustomer').trim();
             const amount = parseFloat(get('#modalAmount')) || 0;
             if (!product || !customer || amount <= 0) return null;
-            return { product, customer, amount, stage: get('#modalStage'), remarks: get('#modalRemarks'), supervisor };
+            const data = { product, customer, amount, stage: get('#modalStage'), remarks: get('#modalRemarks') };
+            if (isSupervisor) data.supervisor = supervisor;
+            return data;
         } else if (type === 'recovery') {
             const customer = get('#modalCustomer').trim();
             const balance = parseFloat(get('#modalBalance')) || 0;
             const location = get('#modalLocation').trim();
             if (!customer || balance < 0 || !location) return null;
-            return { customer, balance, loanType: get('#modalLoanType'), location, actionTaken: get('#modalAction'), supervisor };
+            const data = { customer, balance, loanType: get('#modalLoanType'), location, actionTaken: get('#modalAction') };
+            if (isSupervisor) data.supervisor = supervisor;
+            return data;
         } else if (type === 'sales') {
             const location = get('#modalLocation').trim();
             const purpose = get('#modalPurpose').trim();
             if (!location || !purpose) return null;
-            return { location, date: get('#modalDate'), purpose, status: get('#modalStatus'), remarks: get('#modalRemarks'), supervisor };
+            const data = { location, date: get('#modalDate'), purpose, status: get('#modalStatus'), remarks: get('#modalRemarks') };
+            if (isSupervisor) data.supervisor = supervisor;
+            return data;
         }
         return null;
     }
 
-    // ===== RENDER ALL TABLES =====
+    // ===== RENDER ALL =====
 
     renderAll() {
-        this.renderLoanTable();
-        this.renderRecoveryTable();
-        this.renderSalesTable();
-        this.updateBadges();
-        this.attachSupervisorEvents();
-    }
-
-    renderLoanTable() {
         const loans = this.api._store.loans || [];
-        const tbody = document.getElementById('loanTableBody');
-        tbody.innerHTML = '';
+        const recoveries = this.api._store.recoveries || [];
+        const sales = this.api._store.sales || [];
 
-        if (loans.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><i class="fas fa-inbox"></i> No loan records</td></tr>';
-            document.getElementById('loanCount').textContent = '0';
-            return;
-        }
-
-        loans.forEach(loan => {
-            const tr = document.createElement('tr');
-            const hasNew = this.api.hasNotification('loans', loan.id) || loan._hasNewActivity;
-            if (hasNew) tr.className = 'row-new-activity';
-
-            tr.innerHTML = `
-                <td>${loan.product || '—'}</td>
-                <td>${loan.customer || '—'}</td>
-                <td>${typeof loan.amount === 'number' ? loan.amount.toLocaleString() : (loan.amount || '—')}</td>
-                <td><span class="status-badge">${loan.stage || 'Review'}</span></td>
-                <td class="remark-cell">${loan.remarks || '—'}</td>
-                <td class="supervisor-cell">${loan.supervisor ? loan.supervisor : '<span class="no-comment"><i class="far fa-comment"></i> No comment</span>'}</td>
-                <td style="text-align:center;"><button class="action-btn update-btn" data-type="loan" data-id="${loan.id}"><i class="fas fa-pen"></i></button></td>
-                <td style="text-align:center;"><button class="action-btn" data-type="loan" data-id="${loan.id}" style="color:#a13d3d;"><i class="fas fa-trash-alt"></i></button></td>
-            `;
-            tbody.appendChild(tr);
-        });
-
-        // Attach update events
-        tbody.querySelectorAll('.update-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const type = btn.dataset.type;
-                const id = btn.dataset.id;
-                const record = this.api._store[type + 's'].find(r => r.id === id);
-                if (record) this.openModal(type, record);
-            });
-        });
-
-        // Attach delete events
-        tbody.querySelectorAll('.action-btn .fa-trash-alt').forEach(icon => {
-            icon.parentElement.addEventListener('click', async () => {
-                const btn = icon.parentElement;
-                const type = btn.dataset.type;
-                const id = btn.dataset.id;
-                if (confirm('Delete this record?')) {
-                    let result;
-                    if (type === 'loan') result = await this.api.deleteLoan(id);
-                    else if (type === 'recovery') result = await this.api.deleteRecovery(id);
-                    else if (type === 'sales') result = await this.api.deleteSales(id);
-                    if (result && result.success) {
-                        this.renderAll();
-                        if (this.currentMainTab === 'supervisor' && this.supervisor) {
-                            this.supervisor.refreshAll();
-                        }
-                        this.updateBadges();
-                        this.ui.showToast('🗑️ Deleted', false, 1200);
-                    }
-                }
-            });
-        });
-
-        document.getElementById('loanCount').textContent = loans.length;
-    }
-
-    renderRecoveryTable() {
-        const items = this.api._store.recoveries || [];
-        const tbody = document.getElementById('recoveryTableBody');
-        tbody.innerHTML = '';
-
-        if (items.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><i class="fas fa-inbox"></i> No recovery records</td></tr>';
-            document.getElementById('recoveryCount').textContent = '0';
-            return;
-        }
-
-        items.forEach(rec => {
-            const tr = document.createElement('tr');
-            const hasNew = this.api.hasNotification('recoveries', rec.id) || rec._hasNewActivity;
-            if (hasNew) tr.className = 'row-new-activity';
-
-            tr.innerHTML = `
-                <td>${rec.customer || '—'}</td>
-                <td>${typeof rec.balance === 'number' ? rec.balance.toLocaleString() : (rec.balance || '—')}</td>
-                <td>${rec.loanType || '—'}</td>
-                <td>${rec.location || '—'}</td>
-                <td class="remark-cell">${rec.actionTaken || '—'}</td>
-                <td class="supervisor-cell">${rec.supervisor ? rec.supervisor : '<span class="no-comment"><i class="far fa-comment"></i> No comment</span>'}</td>
-                <td style="text-align:center;"><button class="action-btn update-btn" data-type="recovery" data-id="${rec.id}"><i class="fas fa-pen"></i></button></td>
-                <td style="text-align:center;"><button class="action-btn" data-type="recovery" data-id="${rec.id}" style="color:#a13d3d;"><i class="fas fa-trash-alt"></i></button></td>
-            `;
-            tbody.appendChild(tr);
-        });
-
-        tbody.querySelectorAll('.update-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const type = btn.dataset.type;
-                const id = btn.dataset.id;
-                const record = this.api._store[type + 's'].find(r => r.id === id);
-                if (record) this.openModal(type, record);
-            });
-        });
-
-        tbody.querySelectorAll('.action-btn .fa-trash-alt').forEach(icon => {
-            icon.parentElement.addEventListener('click', async () => {
-                const btn = icon.parentElement;
-                const type = btn.dataset.type;
-                const id = btn.dataset.id;
-                if (confirm('Delete this record?')) {
-                    let result;
-                    if (type === 'loan') result = await this.api.deleteLoan(id);
-                    else if (type === 'recovery') result = await this.api.deleteRecovery(id);
-                    else if (type === 'sales') result = await this.api.deleteSales(id);
-                    if (result && result.success) {
-                        this.renderAll();
-                        if (this.currentMainTab === 'supervisor' && this.supervisor) {
-                            this.supervisor.refreshAll();
-                        }
-                        this.updateBadges();
-                        this.ui.showToast('🗑️ Deleted', false, 1200);
-                    }
-                }
-            });
-        });
-
-        document.getElementById('recoveryCount').textContent = items.length;
-    }
-
-    renderSalesTable() {
-        const items = this.api._store.sales || [];
-        const tbody = document.getElementById('salesTableBody');
-        tbody.innerHTML = '';
-
-        if (items.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><i class="fas fa-inbox"></i> No sales records</td></tr>';
-            document.getElementById('salesCount').textContent = '0';
-            return;
-        }
-
-        items.forEach(sale => {
-            const tr = document.createElement('tr');
-            const hasNew = this.api.hasNotification('sales', sale.id) || sale._hasNewActivity;
-            if (hasNew) tr.className = 'row-new-activity';
-
-            tr.innerHTML = `
-                <td>${sale.location || '—'}</td>
-                <td>${sale.date || '—'}</td>
-                <td>${sale.purpose || '—'}</td>
-                <td><span class="status-badge">${sale.status || 'Open'}</span></td>
-                <td class="remark-cell">${sale.remarks || '—'}</td>
-                <td class="supervisor-cell">${sale.supervisor ? sale.supervisor : '<span class="no-comment"><i class="far fa-comment"></i> No comment</span>'}</td>
-                <td style="text-align:center;"><button class="action-btn update-btn" data-type="sales" data-id="${sale.id}"><i class="fas fa-pen"></i></button></td>
-                <td style="text-align:center;"><button class="action-btn" data-type="sales" data-id="${sale.id}" style="color:#a13d3d;"><i class="fas fa-trash-alt"></i></button></td>
-            `;
-            tbody.appendChild(tr);
-        });
-
-        tbody.querySelectorAll('.update-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const type = btn.dataset.type;
-                const id = btn.dataset.id;
-                const record = this.api._store[type + 's'].find(r => r.id === id);
-                if (record) this.openModal(type, record);
-            });
-        });
-
-        tbody.querySelectorAll('.action-btn .fa-trash-alt').forEach(icon => {
-            icon.parentElement.addEventListener('click', async () => {
-                const btn = icon.parentElement;
-                const type = btn.dataset.type;
-                const id = btn.dataset.id;
-                if (confirm('Delete this record?')) {
-                    let result;
-                    if (type === 'loan') result = await this.api.deleteLoan(id);
-                    else if (type === 'recovery') result = await this.api.deleteRecovery(id);
-                    else if (type === 'sales') result = await this.api.deleteSales(id);
-                    if (result && result.success) {
-                        this.renderAll();
-                        if (this.currentMainTab === 'supervisor' && this.supervisor) {
-                            this.supervisor.refreshAll();
-                        }
-                        this.updateBadges();
-                        this.ui.showToast('🗑️ Deleted', false, 1200);
-                    }
-                }
-            });
-        });
-
-        document.getElementById('salesCount').textContent = items.length;
+        this.ui.renderLoanTable(loans);
+        this.ui.renderRecoveryTable(recoveries);
+        this.ui.renderSalesTable(sales);
+        this.updateBadges();
     }
 
     // ===== REFRESH =====
