@@ -117,7 +117,11 @@ class SupervisorUI {
         });
 
         html += `<td>${record.supervisor || '<span style="color:#8a9bb0;"><i class="far fa-comment"></i> No comment</span>'}</td>`;
-        html += `<td style="text-align:center;"><button class="comment-btn" data-id="${record.id}" data-type="${type}">${hasNew ? '🔴 View' : 'View'}</button></td>`;
+        html += `<td style="text-align:center;">
+            <button class="comment-btn" data-id="${record.id}" data-type="${type}">
+                <i class="fas fa-comment"></i> ${hasNew ? '🔴 View' : 'Comment'}
+            </button>
+        </td>`;
 
         tr.innerHTML = html;
         return tr;
@@ -137,6 +141,9 @@ class SupervisorUI {
             this.renderRecoveryTable(recoveries);
             this.renderSalesTable(sales);
 
+            // Attach comment button events
+            this.attachCommentEvents();
+
             console.log('✅ Supervisor tables refreshed');
 
         } catch (error) {
@@ -145,6 +152,26 @@ class SupervisorUI {
                 this.ui.showToast('⚠️ Error refreshing supervisor view', true, 3000);
             }
         }
+    }
+
+    // ===== COMMENT EVENTS =====
+
+    attachCommentEvents() {
+        document.querySelectorAll('#supervisorView .comment-btn').forEach(btn => {
+            btn.removeEventListener('click', this._commentHandler);
+            btn.addEventListener('click', this._commentHandler = (e) => {
+                const id = btn.dataset.id;
+                const type = btn.dataset.type;
+                const record = this.api._store[type + 's'].find(r => r.id === id);
+                if (record) {
+                    // Dispatch event to main app to open modal
+                    const event = new CustomEvent('supervisorComment', {
+                        detail: { type: type, record: record }
+                    });
+                    document.dispatchEvent(event);
+                }
+            });
+        });
     }
 
     // ===== EMPTY STATE =====
